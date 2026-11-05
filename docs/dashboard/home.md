@@ -289,7 +289,7 @@ computer; see [Security](../SECURITY.md#internet-tv).
 
 ## Hearth themes
 
-A theme made for [Hearth](https://github.com/rudra-avatar/Hearth), another home screen for webOS, can be put on Glasshouse Home from the web dashboard's **Hearth theme** section: a zip in `/media/developer/themes` on the TV, where Hearth keeps them, or one loaded from the computer. Hearth's [theme guide](https://rudra-avatar.github.io/Hearth/theme/theme-guide/) describes the format.
+A theme made for [Hearth](https://github.com/rudra-avatar/Hearth), another home screen for webOS, can be put on Glasshouse Home from the web dashboard's **Hearth theme** section: a zip in `/media/developer/themes` on the TV, where Hearth keeps them, or one loaded from the computer. In the TV app, **Hearth theme** on the Home tab steps through the zips in that folder with OK, and then to none. Hearth's [theme guide](https://rudra-avatar.github.io/Hearth/theme/theme-guide/) describes the format.
 
 * **Colours**: the palette's accent becomes the accent, the widget colour (or the palette's own) the text colour, and the palette's background shows behind the wallpaper.
 * **Fonts**: the widget font goes on the clock and the date, the names font on the tiles' names. Hearth's built-in fonts are not on Glasshouse Home, so naming one changes nothing.
