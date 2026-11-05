@@ -52,6 +52,14 @@ html.resting #wall .layer{-webkit-animation-play-state:paused;animation-play-sta
    which is sized for the digits alone. */
 #mer{font-size:.28em;letter-spacing:0;margin-left:.1em;opacity:.75;font-weight:400}
 #date{margin-top:22px;font-size:28px;color:#a39d93;white-space:nowrap}
+/* The weather under the date, when it is switched on: the conditions' sign
+   in the quieter text colour, the temperature, the place and today's range. */
+#weather{margin-top:14px;font-size:28px;color:#a39d93;white-space:nowrap;display:none}
+#weather.on{display:block}
+#weather svg{width:34px;height:34px;vertical-align:-7px;margin-right:12px;fill:none;stroke:currentColor;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round}
+#weather b{font-weight:400;color:#ece7df;margin-right:14px}
+#weather i{font-style:normal;margin-left:14px}
 /* Switched off, the clock keeps its space, so the rows and Last watched stay put. */
 .no-clock #when{visibility:hidden}
 #source{-webkit-flex:1 1 auto;flex:1 1 auto;min-width:0;padding-left:24px;border-left:1px solid #2a2825;padding-bottom:2px}
@@ -574,6 +582,7 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
     <div id="when">
       <div id="clock"><span id="hm">&mdash;</span><span id="mer" hidden></span></div>
       <div id="date">&mdash;</div>
+      <div id="weather"></div>
     </div>
     <div id="source" class="none">
       <div id="srcKind">&mdash;</div>
@@ -4308,6 +4317,42 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
     img.src = src;
   }
 
+  // ---------------------------------------------------------------- weather
+
+  /*
+   * The weather under the date (lib/home-weather), from the catalogue and
+   * each heartbeat: null while it is off or not read yet.
+   */
+  var WEATHER_ICONS = {
+    sun: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+    cloud: '<path d="M7 18.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 9.6 4.5 4.5 0 0 0 7 18.5z"/>',
+    partly: '<path d="M8.5 5.2a4 4 0 0 1 5.8 2.3M5 9.5a4 4 0 0 1 .4-1.6M3 6.5l1 .5M8 2.5v1.5"/><path d="M8 20h9a3.5 3.5 0 0 0 .5-6.97A4.8 4.8 0 0 0 8.3 12a3.9 3.9 0 0 0-.3 8z"/>',
+    rain: '<path d="M7 15.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.6 4.5 4.5 0 0 0 7 15.5z"/><path d="M8.5 18l-1 3M12.5 18l-1 3M16.5 18l-1 3"/>',
+    snow: '<path d="M7 15.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.6 4.5 4.5 0 0 0 7 15.5z"/><path d="M8.5 19h.01M12 20.5h.01M15.5 19h.01M10 22h.01M14 22h.01"/>',
+    fog: '<path d="M4 9h16M3 13h18M5 17h14"/>',
+    storm: '<path d="M7 15.5h10a4 4 0 0 0 .6-7.95A5.5 5.5 0 0 0 7.1 6.6 4.5 4.5 0 0 0 7 15.5z"/><path d="M12.5 15l-2 3.5h3l-2 3.5"/>'
+  };
+  var weatherShown = '';
+  function renderWeather(w) {
+    var box = $('weather');
+    var key = w ? [w.place, w.temp, w.kind, w.day, w.high, w.low, w.units].join('|') : '';
+    if (key === weatherShown) return;
+    weatherShown = key;
+    if (!w) { box.className = ''; box.innerHTML = ''; return; }
+    var names = {
+      clear: t('home.weather.clear', 'Clear'), partly: t('home.weather.partly', 'Partly cloudy'),
+      cloudy: t('home.weather.cloudy', 'Cloudy'), fog: t('home.weather.fog', 'Fog'),
+      rain: t('home.weather.rain', 'Rain'), snow: t('home.weather.snow', 'Snow'),
+      storm: t('home.weather.storm', 'Thunderstorm')
+    };
+    var icon = w.kind === 'clear' ? (w.day ? 'sun' : 'moon') : w.kind === 'cloudy' ? 'cloud' : w.kind;
+    var range = w.high !== null && w.low !== null ? '<i>' + esc(t('home.weather.range', '{high}\u00b0 / {low}\u00b0', { high: w.high, low: w.low })) + '</i>' : '';
+    box.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true">' + (WEATHER_ICONS[icon] || WEATHER_ICONS.cloud) + '</svg>' +
+      '<b>' + esc(String(w.temp)) + '\u00b0</b>' + esc(names[w.kind] || '') + ' \u00b7 ' + esc(w.place) + range;
+    box.className = 'on';
+  }
+
   // ---------------------------------------------------------------- Hearth theme
 
   /*
@@ -4333,7 +4378,7 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
       (th.fonts || []).forEach(function (f) {
         css += "@font-face{font-family:'gh-theme-" + f.id + "';src:url('" + f.url + "') format('" + f.format + "');font-display:swap}";
       });
-      if (th.widgetFont) css += "#clock,#date{font-family:'gh-theme-" + th.widgetFont + "',sans-serif}";
+      if (th.widgetFont) css += "#clock,#date,#weather{font-family:'gh-theme-" + th.widgetFont + "',sans-serif}";
       if (th.namesFont) css += ".tile .nm{font-family:'gh-theme-" + th.namesFont + "',sans-serif}";
       if (th.bg) css += '#stage{background:' + th.bg + '}';
     }
@@ -4437,6 +4482,7 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
       clearTimeout(loadRetry);
       wallAvailable = !!(r.wallpapers && r.wallpapers.available);
       wallSlots = r.wallpapers && r.wallpapers.slots;
+      renderWeather(r.weather);
       wallRevision = r.wallpapers && r.wallpapers.revision || '';
       updateWall();
       if (!state.arranging) render();
@@ -4583,6 +4629,7 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
         if (standalone && coveredSince && Date.now() - coveredSince > CLOSE_BEHIND_MS) return window.close();
         wallAvailable = !!(r.wallpapers && r.wallpapers.available);
         wallSlots = r.wallpapers && r.wallpapers.slots;
+      renderWeather(r.weather);
         wallRevision = r.wallpapers && r.wallpapers.revision || '';
         updateWall();
         $('fault').className = '';

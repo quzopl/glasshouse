@@ -1193,6 +1193,26 @@ function glasshouseHomeRows(d) {
                press: t('tv.home.theme.press', 'Press OK for {name}', { name: zipName(nextZip) }),
                hint: t('tv.home.theme.hint', 'A Hearth theme from /media/developer/themes on the TV: colours, fonts, wallpaper and the apps\u2019 order, names and icons. None puts back what it replaced.') });
     }
+    // The weather under the date, once a place is chosen on the browser
+    // dashboard; OK steps through the theme's cities, where it has some.
+    var wx = d.weather;
+    if (wx) {
+      r.push({ label: t('home.weather.title', 'Weather'),
+               value: !wx.place ? t('tv.home.weather.noPlace', 'No place') : wx.on ? t('common.on', 'On') : t('common.off', 'Off'),
+               cls: wx.place ? (wx.on ? 'on' : 'off') : '', act: can && wx.place ? 'homeWeather' : null, on: wx.on,
+               press: wx.on ? t('tv.press.switchOff', 'Press OK to switch off') : t('tv.press.switchOn', 'Press OK to switch on'),
+               hint: wx.place ? t('tv.home.weather.hint', 'Now and today\u2019s range for {name}, under the date on Glasshouse Home.', { name: wx.place.name })
+                 : t('tv.home.weather.choose', 'Choose the place on the browser dashboard\u2019s Home tab.') });
+      var cities = (th && th.cities) || [], ci = -1;
+      for (var cj = 0; cj < cities.length; cj++) if (wx.place && cities[cj].lat === wx.place.lat && cities[cj].lon === wx.place.lon) ci = cj;
+      if (cities.length) {
+        var nextCity = cities[(ci + 1) % cities.length];
+        r.push({ label: t('tv.home.weather.place', 'Weather place'), value: wx.place ? wx.place.name : '\u2014', cls: 'act',
+                 act: can ? 'homeWeatherPlace' : null, key: nextCity,
+                 press: t('tv.home.theme.press', 'Press OK for {name}', { name: nextCity.name }),
+                 hint: t('tv.home.weather.placeHint', 'The theme\u2019s cities. Any place can be found on the browser dashboard.') });
+      }
+    }
     // OK steps down from full to off; the browser dashboard's slider sets any 5% step.
     var dark = typeof d.layout.darkening === 'number' ? d.layout.darkening : 100;
     var darkNext = dark > 75 ? 75 : dark > 50 ? 50 : dark > 25 ? 25 : dark > 0 ? 0 : 100;
@@ -3219,6 +3239,10 @@ function activate() {
     case 'homeColours':
       // The view's own look is saved as none chosen.
       return homeLayout({ colours: r.key.own ? null : { text: r.key.text, accent: r.key.accent } });
+    case 'homeWeather':
+      return sendPost('/api/home/weather', { on: !r.on });
+    case 'homeWeatherPlace':
+      return sendPost('/api/home/weather', { on: true, place: { name: r.key.name, lat: r.key.lat, lon: r.key.lon, detail: r.key.detail || '' } });
     case 'homeTheme':
       return r.key ? sendPost('/api/home/theme/load', { name: r.key }, t('home.theme.loaded', 'Theme loaded. Home updates within a few seconds.'))
         : sendPost('/api/home/theme/remove', {}, t('home.theme.removed', 'Theme removed.'));

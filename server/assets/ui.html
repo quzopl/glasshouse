@@ -1316,6 +1316,19 @@
   </div>
   <div class="sub" id="home-theme-note" role="status"></div>
 
+  <div class="pv-sec adv-sec" data-t="home.weather.title">Weather</div>
+  <div class="sub" data-t="home.weather.desc">The weather under the date on Glasshouse Home: now, and today&rsquo;s high and low, from Open-Meteo, read every 20 minutes. Find the place by name, or pick one of the theme&rsquo;s cities.</div>
+  <div class="btns">
+    <button type="button" class="pill idle" id="home-weather-on" onclick="homeWeatherSet({ on: !(homeStatus.weather && homeStatus.weather.on) })">&mdash;</button>
+    <button type="button" class="pill idle" id="home-weather-units" onclick="homeWeatherSet({ units: homeStatus.weather && homeStatus.weather.units === 'f' ? 'c' : 'f' })">&deg;C</button>
+  </div>
+  <div class="sub" id="home-weather-now" role="status"></div>
+  <form class="home-custom" onsubmit="event.preventDefault(); homeWeatherSearch()">
+    <input type="search" id="home-weather-q" maxlength="60" placeholder="City" data-t-placeholder="home.weather.placeholder">
+    <button type="submit" id="home-weather-find" data-t="home.weather.find">Find</button>
+  </form>
+  <div class="btns" id="home-weather-places"></div>
+
   <div class="pv-sec adv-sec" data-t="home.wall.title">Wallpaper</div>
   <div class="sub" data-t="home.wall.introSets">A picture behind Glasshouse Home for each part of the day: none, one of the picture sets, or your own.</div>
   <div class="btns wall-choice" id="home-wall-choice"></div>
