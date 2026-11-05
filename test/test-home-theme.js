@@ -76,7 +76,9 @@ assert.deepEqual(th.wallpaper, { files: ['wallpaper/a.png', 'wallpaper/b.jpg'], 
 assert.deepEqual(th.order, ['youtube.leanback.v4', 'netflix']);
 assert.deepEqual(th.names, { 'youtube.leanback.v4': 'Videos' });
 assert.deepEqual(th.icons, { netflix: 'icons/netflix.png' });
-assert.deepEqual(th.ignored, ['colors.icon', 'fonts.names (inter)', 'iconStyle']);
+assert.deepEqual(th.ignored, ['fonts.names (inter)', 'iconStyle.tile']);
+assert.strictEqual(th.iconStyle, 'mono');
+assert.strictEqual(th.iconInk, '#ffe9c7', 'the icon colour from Hearth\'s list');
 assert.deepEqual(th.cities, [{ name: 'Delhi', lat: 28.6, lon: 77.2, detail: 'India' }]);
 console.log('  ✓ a full theme: its palette, fonts, slideshow (pictures directly in the folder), apps and icons');
 step2(parsed);
@@ -142,6 +144,7 @@ assert.strictEqual(apps[1].title, 'Videos');
 assert.deepEqual(apps[2], { id: 'other', title: 'Other' });
 var v = theme.view();
 assert.strictEqual(v.bg, '#08191b');
+  assert.deepEqual([v.iconStyle, v.iconInk], ['mono', '#ffe9c7']);
 assert.deepEqual(v.fonts.map(function (f) { return f.format; }), ['woff2']);
 assert.strictEqual(v.wallpaper.urls.length, 2);
 assert.strictEqual(theme.summary().source, 'teal.zip');

@@ -12,21 +12,21 @@
       "id": "io.github.rorygallagher2024.lg-webos-dashboard",
       "title": "Glasshouse",
       "iconUri": "https://raw.githubusercontent.com/quzopl/glasshouse/main/server/assets/dashboard-app/assets/icon130.png",
-      "manifestUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.2/io.github.rorygallagher2024.lg-webos-dashboard.manifest.json",
+      "manifestUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.3/io.github.rorygallagher2024.lg-webos-dashboard.manifest.json",
       "manifest": {
         "id": "io.github.rorygallagher2024.lg-webos-dashboard",
-        "version": "0.139.2",
+        "version": "0.139.3",
         "type": "web",
         "title": "Glasshouse",
         "appDescription": "Own the glass. Dashboard, privacy controls and Home Assistant bridge for rooted LG TVs, with Hearth themes and weather on Glasshouse Home",
         "iconUri": "https://raw.githubusercontent.com/quzopl/glasshouse/main/server/assets/dashboard-app/assets/icon130.png",
         "sourceUrl": "https://github.com/quzopl/glasshouse",
         "rootRequired": true,
-        "ipkUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.2/io.github.rorygallagher2024.lg-webos-dashboard_0.139.2_all.ipk",
+        "ipkUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.3/io.github.rorygallagher2024.lg-webos-dashboard_0.139.3_all.ipk",
         "ipkHash": {
-          "sha256": "6f9b9d81ddab5d60c1a2550138a9f827ed4fd5bec7811a32334424a3f3621bb4"
+          "sha256": "dbc9e69807e977795224008c9c5b31d606689c4469c2a59b319aacae414c4848"
         },
-        "ipkSize": 2094706
+        "ipkSize": 2095604
       },
       "pool": "main",
       "requirements": {

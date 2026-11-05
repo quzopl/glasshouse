@@ -4,7 +4,7 @@
 
 An **unofficial fork** of [Glasshouse](https://github.com/rorygallagher2024/glasshouse) by Rory Gallagher that adds three things to **Glasshouse Home**, the home screen Glasshouse puts in place of LG's on a rooted webOS TV:
 
-1. **Hearth themes** — load any theme made for [Hearth](https://github.com/rudra-avatar/Hearth) (one `.zip`): colours, fonts, wallpaper or slideshow, and the apps' order, names and icons. Switch them from the web dashboard or with the remote.
+1. **Hearth themes** — load any theme made for [Hearth](https://github.com/rudra-avatar/Hearth) (one `.zip`): colours, fonts, wallpaper or slideshow, icon style, and the apps' order, names and icons. Switch them from the web dashboard or with the remote.
 2. **Weather** — a panel right of the clock: conditions and temperature now, feels-like, wind and humidity, and a five-day forecast, from [Open-Meteo](https://open-meteo.com) (free, no account, no API key).
 3. **Live preview fix for webOS 5** — the live HDMI preview *in the tile* stayed blank on webOS 5 (e.g. LG CX). It now plays.
 
@@ -26,6 +26,28 @@ Everything else is upstream Glasshouse, unchanged. This fork updates itself from
 ## Install
 
 You need a **rooted** LG webOS TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) (root shown as *ok* in its settings). Glasshouse needs root; its catalog entry is marked `rootRequired`, so the Homebrew Channel gives it root on install by itself — nothing to do by hand. It does not work on a TV without root. See upstream's [Homebrew Channel guide](docs/install-homebrew-channel.md) if you don't have it yet.
+
+### Which root methods work
+
+Glasshouse needs two things from the root, and this fork changes neither:
+
+- **The Homebrew Channel has root** (*Root status: ok* in its settings). On first launch the Glasshouse app runs its installer as root through the Homebrew Channel's `exec` service, and the Homebrew Channel elevates the app because its catalog entry says `rootRequired`.
+- **The Homebrew Channel's start-up hook runs at boot**, which runs `/var/lib/webosbrew/init.d/*`; Glasshouse's hook there starts the server after each cold boot.
+
+The usual webosbrew roots give both: [dejavuln-autoroot](https://github.com/throwaway96/dejavuln-autoroot), [faultmanager-autoroot](https://github.com/throwaway96/faultmanager-autoroot), [RootMyTV](https://rootmytv.github.io/) and crashd. Upstream lists TVs tested with them in [docs/tested-tvs.md](docs/tested-tvs.md).
+
+**NZ Store (natxo) root** is different: it roots the system but leaves the Homebrew Channel unelevated and does not run `/var/lib/webosbrew/init.d` at boot. On such a TV (this fork was tested on one), over SSH as root:
+
+```sh
+# give the Homebrew Channel root, then let the TV's service hub read it again
+/media/developer/apps/usr/palm/services/org.webosbrew.hbchannel.service/elevate-service
+ls-control scan-services
+# after installing Glasshouse and opening it once: start it at boot from natxo's own hook folder
+cp /var/lib/webosbrew/init.d/50-tvweb /media/developer/natxo/init.d/50-tvweb
+chmod 755 /media/developer/natxo/init.d/50-tvweb
+```
+
+The elevation is lost when the TV restarts, so put the first two lines in a script in `/media/developer/natxo/init.d/` too (run after a delay of ~20 s, in the background).
 
 ### A. From the Homebrew Channel (recommended)
 
@@ -78,7 +100,9 @@ Install this package over it (any of the ways above). The app id is the same, so
 | `apps` | the Apps row's order, and new names |
 | `icons` | the apps' icons |
 | `cities` | offered as places for the weather |
-| `iconStyle`, `colors.icon` | nothing on Glasshouse Home: listed as *not used* |
+| `iconStyle.style` (mono, soft, gradient, accent, tinted) | the apps' icons drawn grey, dimmed, high-contrast or tinted, with CSS filters on their own pictures |
+| `colors.icon` | the colour of accent and tinted icons (else the theme's text colour) |
+| `iconStyle.tile` | nothing on Glasshouse Home: listed as *not used* |
 
 Colours and app order go into the normal Home settings, so you can still change them while the theme is on. **Remove the theme** puts back the colours and order it replaced.
 
@@ -92,16 +116,16 @@ Colours and app order go into the normal Home settings, so you can still change 
 
 | Zip | Name | Look |
 |---|---|---|
-| `polar-night.zip` | Polar Night | teal palette, aurora and starry skies, Jura |
-| `forest.zip` | Forest | forest green, ferns and an autumn river, Work Sans |
-| `ocean.zip` | Ocean | teal, waves and a reef, Outfit |
-| `mountains.zip` | Mountains | blue-grey, misty peaks, Lora |
-| `campfire.zip` | Campfire | graphite and amber, lava and sunsets, Bricolage Grotesque |
-| `midnight.zip` | Midnight | midnight blue, night landscapes, Poiret One |
-| `zen.zip` | Zen | light grey, a pier in the fog and Mount Fuji, Poppins |
-| `retro.zip` | Retro | OLED black, green pixel font (Pixelify Sans) |
-| `terminal.zip` | Terminal | OLED black, console green, JetBrains Mono |
-| `oled-black.zip` | OLED Black | OLED black, white, Big Shoulders |
+| `polar-night.zip` | Polar Night | teal palette, aurora and starry skies, Jura, teal-tinted icons |
+| `forest.zip` | Forest | forest green, ferns and an autumn river, Work Sans, tinted icons |
+| `ocean.zip` | Ocean | teal, waves and a reef, Outfit, original icons |
+| `mountains.zip` | Mountains | blue-grey, misty peaks, Lora, soft icons |
+| `campfire.zip` | Campfire | graphite and amber, lava and sunsets, Bricolage Grotesque, amber icons |
+| `midnight.zip` | Midnight | midnight blue, night landscapes, Poiret One, blue icons |
+| `zen.zip` | Zen | light grey, a pier in the fog and Mount Fuji, Poppins, soft icons |
+| `retro.zip` | Retro | OLED black, green pixel font (Pixelify Sans), green icons |
+| `terminal.zip` | Terminal | OLED black, console green, JetBrains Mono, green icons |
+| `oled-black.zip` | OLED Black | OLED black, white, Big Shoulders, grey icons |
 
 The three black themes have no wallpaper of their own, so your normal Glasshouse wallpaper stays behind them; choose *None* under **Wallpaper** for pure black.
 
@@ -128,7 +152,7 @@ With **Live preview** and **Preview in the tile** on, the input's picture stayed
 
 ## Screenshots
 
-All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the TV captures only the page, not the video plane.
+All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the TV captures only the page, not the video plane. The Terminal and OLED Black shots were taken before icon styles came, so their icons show in colour.
 
 <p align="center"><img src="docs/screenshots/fork/themes-grid.jpg" width="900" alt="The ten themes side by side"></p>
 
@@ -316,14 +340,6 @@ The pages are built from [docs/](docs/), so they can also be read there.
 ## Security
 
 The dashboard has **no authentication by default**, for frictionless control from any phone or browser on a trusted local network. **Never expose port 8080 directly to the internet (do not port-forward).** [Security](https://rorygallagher2024.github.io/glasshouse/SECURITY/) covers the token, closing the port to the network, and MQTT.
-
----
-
-## Support the project
-
-Glasshouse is free, open-source, and maintained in spare time alongside community contributions. If it provides value to you, donations are much appreciated, helping to offset the personal cost of LLM tokens used for development and webOS research.
-
-[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Donate-yellow.svg)](https://buymeacoffee.com/rorygallagher2024)
 
 ---
 
