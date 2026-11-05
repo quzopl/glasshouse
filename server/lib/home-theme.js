@@ -106,14 +106,17 @@ function entries(buf, errors) {
  * One entry unpacked, stopped as soon as it gives more than the size the zip
  * states for it: a zip bomb states a small size and unpacks to gigabytes,
  * and node 0.12's inflateRawSync has no limit on what it gives. The packed
- * data goes in 16 KB at a time and no more is given once the limit is
+ * data goes in a piece at a time and no more is given once the limit is
  * passed; the stream is left to end rather than closed, since closing zlib
  * while it still works through a write aborts the server (node 8, a CX).
+ * Deflate packs at most 1032 to 1, so a piece of about size / 1032 bytes
+ * holds all an honest entry has, and the piece that passes the limit can
+ * unpack to at most about a megabyte more.
  */
-var INFLATE_STEP = 16384;
+function inflateStep(size) { return Math.min(16384, Math.max(1024, Math.ceil(size / 1032) + 64)); }
 function inflate(entry, cb) {
   if (entry.method === 0) return cb(entry.data.length === entry.size ? null : new Error('damaged'), entry.data);
-  var inf = zlib.createInflateRaw(), chunks = [], got = 0, done = false, at = 0;
+  var inf = zlib.createInflateRaw(), chunks = [], got = 0, done = false, at = 0, step = inflateStep(entry.size);
   function finish(err) {
     if (done) return;
     done = true;
@@ -123,15 +126,20 @@ function inflate(entry, cb) {
   inf.on('data', function (d) {
     if (done) return;
     got += d.length;
-    if (got > entry.size) return finish(new Error('unpacks to more than it states'));
+    if (got > entry.size) {
+      /** @type {any} */
+      var over = new Error('unpacks to more than it states');
+      over.oversize = true;
+      return finish(over);
+    }
     chunks.push(d);
   });
   inf.on('error', function () { finish(new Error('damaged')); });
   inf.on('end', function () { finish(null); });
   (function feed() {
     if (done || at >= entry.data.length) return inf.end();
-    var piece = entry.data.slice(at, at + INFLATE_STEP);
-    at += INFLATE_STEP;
+    var piece = entry.data.slice(at, at + step);
+    at += step;
     inf.write(piece, feed);
   })();
 }
@@ -147,6 +155,8 @@ function unzip(buf, errors, cb) {
     inflate(e, function (err, data) {
       if (err) errors.push(e.name + ': ' + err.message);
       else out[e.name] = data;
+      // One entry that lies about its size refuses the zip: the rest are not unpacked.
+      if (err && err.oversize) return cb(null);
       next();
     });
   })();

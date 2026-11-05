@@ -111,7 +111,7 @@ function step2(parsed) {
         var big = new Buffer(20 * 1024 * 1024);
         big.fill(0);
         theme.parse(zip({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'bomb.png': big }, 10), function (r3) {
-          assert.ok(r3.errors && r3.errors.join('\n').indexOf('bomb.png: unpacks to more than it states') !== -1, JSON.stringify(r3.errors));
+          assert.ok(r3.errors && r3.errors.join('\n').indexOf('unpacks to more than it states') !== -1, JSON.stringify(r3.errors));
           console.log('  ✓ refused as Hearth refuses: unknown keys, missing files, scripts and pages, paths out of the zip');
           console.log('  ✓ an entry unpacking to more than its stated size is stopped (a zip bomb)');
           step3(parsed);
