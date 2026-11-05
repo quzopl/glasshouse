@@ -287,6 +287,17 @@ The links and logins are kept on the TV only. They are not shown on the
 dashboard again, and never sent to Home Assistant, the logs or a phone or
 computer; see [Security](../SECURITY.md#internet-tv).
 
+## Hearth themes
+
+A theme made for [Hearth](https://github.com/rudra-avatar/Hearth), another home screen for webOS, can be put on Glasshouse Home from the web dashboard's **Hearth theme** section: a zip in `/media/developer/themes` on the TV, where Hearth keeps them, or one loaded from the computer. Hearth's [theme guide](https://rudra-avatar.github.io/Hearth/theme/theme-guide/) describes the format.
+
+* **Colours**: the palette's accent becomes the accent, the widget colour (or the palette's own) the text colour, and the palette's background shows behind the wallpaper.
+* **Fonts**: the widget font goes on the clock and the date, the names font on the tiles' names. Hearth's built-in fonts are not on Glasshouse Home, so naming one changes nothing.
+* **Wallpaper**: the theme's picture, or its slideshow, replaces the chosen wallpaper while the theme is on.
+* **Apps**: their order, names and icons on the Apps row.
+
+Icon styles, the icon colour and cities have nothing to change on Glasshouse Home and are named as not used. A zip is checked as Hearth checks it: an unknown key, a file the manifest names but the zip lacks, or anything but pictures, fonts, the manifest and notes refuses it, and the dashboard shows why. The colours and the app order can still be changed while the theme is on; **Remove the theme** puts back the ones it replaced.
+
 ## Wallpapers
 
 By default, Glasshouse Home uses a pure `#000` OLED black background (and leaves the TV's [screen saver](screen-savers.md) untouched). It can instead show a picture for each of four times of day: **Morning** (06:00 to 11:00), **Afternoon** (11:00 to 17:00), **Evening** (17:00 to 21:00) and **Night** (21:00 to 06:00).
