@@ -1217,6 +1217,7 @@ function handleHomeRoute(req, res, u, pathname) {
         c.supported = st.supported;
         c.wallpapers = st.wallpapers;
         c.theme = st.theme;
+        c.weather = st.weather;
         c.layoutVersion = homeModule.layoutVersion();
         reply(c);
       });
@@ -1237,6 +1238,10 @@ function handleHomeRoute(req, res, u, pathname) {
       return sendIconFile(req, res, wallpaper, function (status, error) {
         send(res, status, JSON.stringify({ ok: false, error: error }));
       }, 'image/jpeg');
+    }
+    // Places for the weather, by name (lib/home-weather).
+    if (pathname === '/api/home/weather/search') {
+      return homeModule.weather.search(u.query && u.query.q, String(u.query && u.query.lang || ''), reply);
     }
     // A Hearth theme: the one on and the zips in Hearth's folder; and its files, for the view.
     if (pathname === '/api/home/theme') {
@@ -1306,6 +1311,7 @@ function handleHomeRoute(req, res, u, pathname) {
         });
       }
       if (pathname === '/api/home/theme/remove') return homeModule.removeTheme(reply);
+      if (pathname === '/api/home/weather') return homeModule.weather.set(body, reply);
       if (pathname === '/api/home/wallpapers') return homeModule.setWallpapers(body, reply);
       if (pathname === '/api/home/enable') return homeModule.enable(reply);
       if (pathname === '/api/home/disable') return homeModule.disable(reply);

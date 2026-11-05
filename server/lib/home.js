@@ -32,6 +32,7 @@ var names = require('./names');
 var writeJsonAtomic = require('./util').writeJsonAtomic;
 var wallpapers = require('./home-wallpapers');
 var homeTheme = require('./home-theme');
+var homeWeather = require('./home-weather');
 var takeover = require('./home-takeover');
 var recent = require('./home-recent');
 var recentApps = require('./home-recent-apps');
@@ -1986,7 +1987,7 @@ function beat(body) {
   beats++;
   if (viewInFront()) watchBeat(BEAT_GRACE_MS);
   return { ok: true, enabled: readConfig().enabled, covered: viewCovered(), saver: powerState === 'Screen Saver',
-           build: buildId, wallpapers: wallpapers.status(),
+           build: buildId, wallpapers: wallpapers.status(), weather: homeWeather.view(),
            layoutVersion: layoutVersion(), sleeps: sleeps, trace: fs.existsSync(traceFile()) };
 }
 
@@ -2318,6 +2319,7 @@ function status(cb) {
         wallpapers: wallpapers.status(),
         colourPresets: COLOUR_PRESETS,
         theme: homeTheme.summary(),
+        weather: homeWeather.status(),
         layout: layoutOf(c)
       };
       if (c.lgAutoLaunch === 'on' || hal === 'on' || hal === 'off') {
@@ -2386,7 +2388,8 @@ function removeTheme(cb) {
  */
 function viewStatus() {
   var c = readConfig();
-  return { layout: layoutOf(c), enabled: c.enabled, supported: supported(), wallpapers: wallpapers.status(), theme: homeTheme.view() };
+  return { layout: layoutOf(c), enabled: c.enabled, supported: supported(), wallpapers: wallpapers.status(), theme: homeTheme.view(),
+    weather: homeWeather.view() };
 }
 
 // LG's Home reads its layout from /mnt/lg/cmn_data/manifest on webOS 9 only;
@@ -2402,6 +2405,7 @@ function init(opts) {
   if (opts.stateDir) stateDir = opts.stateDir;
   wallpapers.init(stateDir);
   homeTheme.init({ stateDir: stateDir, themesDir: opts.themesDir });
+  homeWeather.init({ stateDir: stateDir, getJson: opts.getJson });
   recent.init(stateDir, opts.now);
   recentApps.init({ luna: lunaFn, excluded: function () { return readConfig().excludedRecents; } });
   recommended.init({ luna: lunaFn });
@@ -2616,6 +2620,7 @@ module.exports = {
   loadTheme: loadTheme,
   removeTheme: removeTheme,
   theme: homeTheme,
+  weather: homeWeather,
   channelList: channelList,
   guide: guide,
   now: now,

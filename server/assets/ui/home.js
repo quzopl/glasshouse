@@ -12,6 +12,8 @@ let homeWallTimer = null;
 let homeWallUploading = false;
 let homeThemeZips = [];   // the zips in Hearth's folder on the TV
 let homeThemeBusy = false;
+let homeWeatherFound = [];  // places found by name, for the weather
+let homeWeatherPlaces = []; // what the place buttons stand for
 // null until the server says; false on a TV Glasshouse Home is not offered on.
 let homeAvailable = null;
 
@@ -268,6 +270,7 @@ function renderHome() {
   renderHomeWalls();
   renderHomeColours();
   renderHomeTheme();
+  renderHomeWeather();
   if (!homeDarkDragging) showHomeDarkening(homeLayout && typeof homeLayout.darkening === 'number' ? homeLayout.darkening : 100);
   const darkWrap = q('home-dark-wrap');
   if (darkWrap) darkWrap.classList.toggle('disabled', !homeWritable());
@@ -1061,4 +1064,55 @@ function homeThemeRemove() {
   return homeThemeSend(() => fetch(api('/api/home/theme/remove'), {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
   }));
+}
+
+/* The weather under the date (lib/home-weather): on or off, the place, found
+   by name through Open-Meteo or taken from the theme's cities, and units. */
+function renderHomeWeather() {
+  const onBtn = q('home-weather-on');
+  if (!onBtn || !homeStatus || !homeStatus.weather) return;
+  const w = homeStatus.weather;
+  const can = homeWritable();
+  onBtn.textContent = w.on ? t('common.on', 'On') : t('common.off', 'Off');
+  onBtn.className = 'pill ' + (w.on ? 'on' : 'idle');
+  onBtn.disabled = !can;
+  q('home-weather-units').textContent = w.units === 'f' ? '\u00b0F' : '\u00b0C';
+  q('home-weather-units').disabled = !can;
+  const now = q('home-weather-now');
+  if (!w.place) now.textContent = t('home.weather.noPlace', 'Choose a place below.');
+  else {
+    const reading = w.now ? ` \u00b7 ${w.now.temp}\u00b0` : w.on ? ' \u00b7 ' + t('home.weather.waiting', 'not read yet') : '';
+    now.textContent = t('home.weather.place', 'Place: {name}', { name: w.place.name + (w.place.detail ? ' (' + w.place.detail + ')' : '') }) + reading;
+  }
+  const cities = (homeStatus.theme && homeStatus.theme.cities) || [];
+  homeWeatherPlaces = homeWeatherFound.concat(cities.filter(c => !homeWeatherFound.some(f => f.lat === c.lat && f.lon === c.lon)));
+  q('home-weather-places').innerHTML = homeWeatherPlaces.map((p, i) => `<button type="button" class="pill ${w.place && w.place.lat === p.lat && w.place.lon === p.lon ? 'on' : 'idle'}"
+    ${can ? '' : 'disabled'} onclick="homeWeatherPick(${i})">${esc(p.name)}${p.detail ? ' \u00b7 ' + esc(p.detail) : ''}</button>`).join('');
+}
+
+async function homeWeatherSet(patch) {
+  if (!homeWritable()) return;
+  try {
+    const r = await homePost('/api/home/weather', patch);
+    homeStatus.weather = r.weather;
+  } catch (e) { showErr(e.message); }
+  renderHomeWeather();
+  // The first reading takes a moment; show it once it is in.
+  setTimeout(loadHome, 3000);
+}
+
+function homeWeatherPick(i) {
+  const p = homeWeatherPlaces[i];
+  if (p) homeWeatherSet({ place: { name: p.name, lat: p.lat, lon: p.lon, detail: p.detail || '' }, on: true });
+}
+
+async function homeWeatherSearch() {
+  const query = q('home-weather-q').value.trim();
+  if (query.length < 2) return;
+  try {
+    const lang = (document.documentElement.lang || 'en').slice(0, 2);
+    homeWeatherFound = (await homeGet('/api/home/weather/search?q=' + encodeURIComponent(query) + '&lang=' + lang)).places || [];
+    renderHomeWeather();
+    if (!homeWeatherFound.length) q('home-weather-now').textContent = t('home.weather.notFound', 'No place of that name.');
+  } catch (e) { showErr(e.message); }
 }

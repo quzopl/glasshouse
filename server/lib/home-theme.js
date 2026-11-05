@@ -11,9 +11,9 @@
  * What Glasshouse Home has an equivalent for is used: the colours (as its
  * text and accent colour and the page's background), the fonts (the clock and
  * the tile names), the wallpaper or slideshow, the apps' order and names and
- * their icons. Hearth's icon styles and icon colour, and its cities (Home has
- * no weather), are read and checked but have nothing to change, and are
- * listed as ignored.
+ * their icons, and its cities as places offered for the weather. Hearth's
+ * icon styles and icon colour are read and checked but have nothing to
+ * change, and are listed as ignored.
  *
  * A theme is unpacked into stateDir/home-theme: theme.json, the checked
  * manifest and what the theme replaced, and the theme's files under files/.
@@ -329,13 +329,15 @@ function checkManifest(m, files, errors) {
   if (m.cities !== undefined) {
     if (!isArray(m.cities)) errors.push('cities: must be a list');
     else {
+      out.cities = [];
       m.cities.forEach(function (ct, i) {
         var where = 'cities[' + i + ']';
         if (!isObject(ct)) return errors.push(where + ': must be an object');
         onlyKeys(ct, ['name', 'lat', 'lon', 'detail'], where, errors);
-        if (!textOf(ct.name, 60) || typeof ct.lat !== 'number' || typeof ct.lon !== 'number') errors.push(where + ': needs name, lat and lon');
+        if (!textOf(ct.name, 60) || typeof ct.lat !== 'number' || typeof ct.lon !== 'number') return errors.push(where + ': needs name, lat and lon');
+        if (ct.detail !== undefined && !textOf(ct.detail, 120)) return errors.push(where + ': detail must be text');
+        out.cities.push({ name: ct.name, lat: ct.lat, lon: ct.lon, detail: typeof ct.detail === 'string' ? ct.detail : '' });
       });
-      out.ignored.push('cities');
     }
   }
   return out;
@@ -519,7 +521,9 @@ function summary() {
       wallpaper: th.wallpaper ? th.wallpaper.files.length : 0,
       icons: th.icons ? Object.keys(th.icons).length : 0,
       apps: th.order ? th.order.length : 0
-    }
+    },
+    // Offered as places for the weather, as Hearth puts them first in its city list.
+    cities: th.cities || []
   };
 }
 
