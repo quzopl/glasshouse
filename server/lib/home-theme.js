@@ -11,9 +11,10 @@
  * What Glasshouse Home has an equivalent for is used: the colours (as its
  * text and accent colour and the page's background), the fonts (the clock and
  * the tile names), the wallpaper or slideshow, the apps' order and names and
- * their icons, and its cities as places offered for the weather. Hearth's
- * icon styles and icon colour are read and checked but have nothing to
- * change, and are listed as ignored.
+ * their icons, their style (mono, soft, tinted and the rest, drawn with CSS
+ * filters) and colour, and its cities as places offered for the weather.
+ * The icon tile's light or dark has nothing to change and is listed as
+ * ignored.
  *
  * A theme is unpacked into stateDir/home-theme: theme.json, the checked
  * manifest and what the theme replaced, and the theme's files under files/.
@@ -208,7 +209,7 @@ function checkManifest(m, files, errors) {
       if (c.widget !== undefined && c.widgetInk !== undefined) errors.push('colors: give "widget" or "widgetInk", not both');
       if (c.icon !== undefined) {
         if (c.icon !== 'theme' && !INKS[c.icon]) errors.push('colors.icon: unknown colour "' + c.icon + '"');
-        out.ignored.push('colors.icon');
+        else out.iconInk = INKS[c.icon] || null;
       }
       var pal = PALETTES[c.theme] || null;
       out.colours = {
@@ -257,7 +258,8 @@ function checkManifest(m, files, errors) {
       onlyKeys(s, ['style', 'tile'], 'iconStyle', errors);
       if (s.style !== undefined && ICON_STYLES.indexOf(s.style) === -1) errors.push('iconStyle.style: unknown style "' + s.style + '"');
       if (s.tile !== undefined && s.tile !== 'dark' && s.tile !== 'light') errors.push('iconStyle.tile: must be dark or light');
-      out.ignored.push('iconStyle');
+      if (s.style !== undefined && s.style !== 'original') out.iconStyle = s.style;
+      if (s.tile !== undefined) out.ignored.push('iconStyle.tile');
     }
   }
 
@@ -491,6 +493,13 @@ function view() {
   if (!t) return null;
   var th = t.theme, out = { name: th.name, revision: t.revision };
   if (th.colours && th.colours.bg) out.bg = th.colours.bg;
+  // The icons' style, and the colour accent and tinted icons take: the
+  // theme's icon colour, else its text colour (Hearth's "follow theme"),
+  // else its palette's accent.
+  if (th.iconStyle) {
+    out.iconStyle = th.iconStyle;
+    out.iconInk = th.iconInk || (th.colours && (th.colours.text || th.colours.accent)) || null;
+  }
   if (th.fonts) {
     out.fonts = th.fonts.files.map(function (f) {
       var ext = path.extname(f.file).slice(1).toLowerCase();

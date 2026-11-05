@@ -295,8 +295,9 @@ A theme made for [Hearth](https://github.com/rudra-avatar/Hearth), another home 
 * **Fonts**: the widget font goes on the clock and the date, the names font on the tiles' names. Hearth's built-in fonts are not on Glasshouse Home, so naming one changes nothing.
 * **Wallpaper**: the theme's picture, or its slideshow, replaces the chosen wallpaper while the theme is on.
 * **Apps**: their order, names and icons on the Apps row.
+* **Icon style**: mono, soft, gradient, accent or tinted icons, drawn with CSS filters on the apps' own pictures, in the theme's icon colour or else its text colour.
 
-A theme's cities are offered as places for the weather. Icon styles and the icon colour have nothing to change on Glasshouse Home and are named as not used. A zip is checked as Hearth checks it: an unknown key, a file the manifest names but the zip lacks, or anything but pictures, fonts, the manifest and notes refuses it, and the dashboard shows why. The colours and the app order can still be changed while the theme is on; **Remove the theme** puts back the ones it replaced.
+A theme's cities are offered as places for the weather. The icon tile's light or dark has nothing to change on Glasshouse Home and is named as not used. A zip is checked as Hearth checks it: an unknown key, a file the manifest names but the zip lacks, or anything but pictures, fonts, the manifest and notes refuses it, and the dashboard shows why. The colours and the app order can still be changed while the theme is on; **Remove the theme** puts back the ones it replaced.
 
 ## Weather
 
