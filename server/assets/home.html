@@ -56,18 +56,21 @@ html.resting #wall .layer{-webkit-animation-play-state:paused;animation-play-sta
    the conditions' sign and the temperature large, what it is and where,
    feels-like, wind and humidity, and five days below. Left out while the
    preview has that room. */
-#weather{-webkit-flex:0 0 auto;flex:0 0 auto;margin-left:48px;padding:0 0 2px 40px;border-left:1px solid #2a2825;display:none}
+#weather{-webkit-flex:0 1 auto;flex:0 1 auto;min-width:0;max-width:640px;max-height:262px;overflow:hidden;margin-left:48px;padding:0 0 2px 40px;border-left:1px solid #2a2825;display:none}
 #weather.on{display:block}
 #now.previewing #weather{display:none}
 #weather svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-#wxNow{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
-#wxNow svg{width:88px;height:88px;margin-right:22px;color:#a39d93}
-#wxTemp{font-family:'Outfit',sans-serif;font-size:96px;line-height:.85;font-weight:300;letter-spacing:-2px}
-#wxDesc{font-size:26px;margin-top:10px;white-space:nowrap}
-#wxMore{font-size:20px;color:#a39d93;margin-top:6px;white-space:nowrap}
-#wxDays{display:-webkit-flex;display:flex;margin-top:16px}
-#wxDays div{width:84px;text-align:center;font-size:19px;color:#a39d93;white-space:nowrap}
-#wxDays svg{display:block;width:32px;height:32px;margin:4px auto}
+/* Each line has a set height, so a theme's font with tall metrics (Poppins)
+   cannot make the panel taller than the strip and push it off the top: 84 +
+   40 + 30 + 98 = 252 of the strip's 262. */
+#wxNow{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;height:84px;overflow:hidden}
+#wxNow svg{width:76px;height:76px;margin-right:20px;color:#a39d93;-webkit-flex:0 0 auto;flex:0 0 auto}
+#wxTemp{font-family:'Outfit',sans-serif;font-size:84px;line-height:84px;height:84px;font-weight:300;letter-spacing:-2px}
+#wxDesc{font-size:26px;line-height:32px;height:32px;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wxMore{font-size:20px;line-height:26px;height:26px;color:#a39d93;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#wxDays{display:-webkit-flex;display:flex;margin-top:14px;height:84px}
+#wxDays div{width:84px;text-align:center;font-size:19px;line-height:24px;color:#a39d93;white-space:nowrap}
+#wxDays svg{display:block;width:30px;height:30px;margin:3px auto}
 #wxDays b{font-weight:400;color:#ece7df}
 /* Switched off, the clock keeps its space, so the rows and Last watched stay put. */
 .no-clock #when{visibility:hidden}
