@@ -10,7 +10,7 @@ An **unofficial fork** of [Glasshouse](https://github.com/rorygallagher2024/glas
 
 Everything else is upstream Glasshouse, unchanged. This fork updates itself from **this** repository's releases.
 
-<p align="center"><img src="docs/screenshots/fork/theme-polarna-noc.jpg" width="900" alt="Glasshouse Home with the Polar night theme: clock, weather panel with a five-day forecast, inputs and apps"></p>
+<p align="center"><img src="docs/screenshots/fork/theme-polar-night.jpg" width="900" alt="Glasshouse Home with the Polar Night theme: clock, weather panel with a five-day forecast, inputs and apps"></p>
 
 ## Contents
 
@@ -25,7 +25,7 @@ Everything else is upstream Glasshouse, unchanged. This fork updates itself from
 
 ## Install
 
-You need a **rooted** LG webOS TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) (root shown as *ok* in its settings). See upstream's [Homebrew Channel guide](docs/install-homebrew-channel.md) if you don't have it yet.
+You need a **rooted** LG webOS TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) (root shown as *ok* in its settings). Glasshouse needs root; its catalog entry is marked `rootRequired`, so the Homebrew Channel gives it root on install by itself — nothing to do by hand. It does not work on a TV without root. See upstream's [Homebrew Channel guide](docs/install-homebrew-channel.md) if you don't have it yet.
 
 ### A. From the Homebrew Channel (recommended)
 
@@ -88,20 +88,20 @@ Colours and app order go into the normal Home settings, so you can still change 
 - **Web dashboard** → **Home** → **Hearth theme**: every zip in that folder is a button; **Load a theme zip…** uploads one from your computer; **Remove the theme** takes it off.
 - **With the remote**: open the **Glasshouse** app → **Home** → **Hearth theme**. Each **OK** loads the next zip, and after the last one goes back to none.
 
-**Ten ready-made themes** are attached to every [release](https://github.com/quzopl/glasshouse/releases/latest), one zip each. They use Hearth's public-domain photos and SIL OFL fonts that include Polish and other Central European letters, and list ten Polish cities for the weather:
+**Ten ready-made themes** are attached to every [release](https://github.com/quzopl/glasshouse/releases/latest), one zip each. They use Hearth's public-domain photos and SIL OFL fonts that include Polish and other Central European letters, and list ten Polish cities for the weather (any place can be found by name):
 
 | Zip | Name | Look |
 |---|---|---|
-| `polarna-noc.zip` | Polarna noc (Polar night) | teal palette, aurora and starry skies, Jura |
-| `las.zip` | Las (Forest) | forest green, ferns and an autumn river, Work Sans |
+| `polar-night.zip` | Polar Night | teal palette, aurora and starry skies, Jura |
+| `forest.zip` | Forest | forest green, ferns and an autumn river, Work Sans |
 | `ocean.zip` | Ocean | teal, waves and a reef, Outfit |
-| `gory.zip` | Góry (Mountains) | blue-grey, misty peaks, Lora |
-| `ognisko.zip` | Ognisko (Campfire) | graphite and amber, lava and sunsets, Bricolage Grotesque |
-| `polnoc.zip` | Północ (Midnight) | midnight blue, night landscapes, Poiret One |
+| `mountains.zip` | Mountains | blue-grey, misty peaks, Lora |
+| `campfire.zip` | Campfire | graphite and amber, lava and sunsets, Bricolage Grotesque |
+| `midnight.zip` | Midnight | midnight blue, night landscapes, Poiret One |
 | `zen.zip` | Zen | light grey, a pier in the fog and Mount Fuji, Poppins |
 | `retro.zip` | Retro | OLED black, green pixel font (Pixelify Sans) |
 | `terminal.zip` | Terminal | OLED black, console green, JetBrains Mono |
-| `czern-oled.zip` | Czerń OLED (OLED black) | OLED black, white, Big Shoulders |
+| `oled-black.zip` | OLED Black | OLED black, white, Big Shoulders |
 
 The three black themes have no wallpaper of their own, so your normal Glasshouse wallpaper stays behind them; choose *None* under **Wallpaper** for pure black.
 
@@ -134,11 +134,11 @@ All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the 
 
 | | |
 |---|---|
-| ![Polar night](docs/screenshots/fork/theme-polarna-noc.jpg) Polarna noc | ![Forest](docs/screenshots/fork/theme-las.jpg) Las |
-| ![Ocean](docs/screenshots/fork/theme-ocean.jpg) Ocean | ![Mountains](docs/screenshots/fork/theme-gory.jpg) Góry |
-| ![Campfire](docs/screenshots/fork/theme-ognisko.jpg) Ognisko | ![Midnight](docs/screenshots/fork/theme-polnoc.jpg) Północ |
+| ![Polar Night](docs/screenshots/fork/theme-polar-night.jpg) Polar Night | ![Forest](docs/screenshots/fork/theme-forest.jpg) Forest |
+| ![Ocean](docs/screenshots/fork/theme-ocean.jpg) Ocean | ![Mountains](docs/screenshots/fork/theme-mountains.jpg) Mountains |
+| ![Campfire](docs/screenshots/fork/theme-campfire.jpg) Campfire | ![Midnight](docs/screenshots/fork/theme-midnight.jpg) Midnight |
 | ![Zen](docs/screenshots/fork/theme-zen.jpg) Zen | ![Retro](docs/screenshots/fork/theme-retro.jpg) Retro |
-| ![Terminal](docs/screenshots/fork/theme-terminal.jpg) Terminal | ![OLED black](docs/screenshots/fork/theme-czern-oled.jpg) Czerń OLED |
+| ![Terminal](docs/screenshots/fork/theme-terminal.jpg) Terminal | ![OLED Black](docs/screenshots/fork/theme-oled-black.jpg) OLED Black |
 
 **The weather panel**
 
@@ -185,7 +185,7 @@ python3 scripts/fork-repo-json.py                                               
 
 - **Glasshouse** © Rory Gallagher, [MIT](LICENSE) — all of the base project. Please report problems with the additions above here, not upstream.
 - **Hearth** © its authors, MIT — theme format, palettes, and the photos and fonts used in the ten themes.
-- Photos in the themes: public domain (as stated by Hearth's `THIRD_PARTY_NOTICES.md`). Fonts: SIL Open Font License 1.1; each theme zip carries its font's licence as `LICENCJA-czcionki.txt`.
+- Photos in the themes: public domain (as stated by Hearth's `THIRD_PARTY_NOTICES.md`). Fonts: SIL Open Font License 1.1; each theme zip carries its font's licence as `FONT-LICENSE.txt`.
 - Weather data: [Open-Meteo](https://open-meteo.com), CC BY 4.0.
 
 This fork is not affiliated with LG, webOS, Hearth or upstream Glasshouse. Rooting and running homebrew on your TV is at your own risk.
