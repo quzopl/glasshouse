@@ -2950,5 +2950,8 @@
  "home.theme.title": {"text": "Motyw Hearth", "from": "Hearth theme"},
  "home.theme.upload": {"text": "Wczytaj plik zip motywu…", "from": "Load a theme zip…"},
  "srv.home.themeRefused": {"text": "Motyw nie został wczytany.", "from": "The theme was not loaded."},
- "srv.home.themeSize": {"text": "Plik zip motywu może mieć najwyżej {mb} MB.", "from": "The theme zip must be at most {mb} MB."}
+ "srv.home.themeSize": {"text": "Plik zip motywu może mieć najwyżej {mb} MB.", "from": "The theme zip must be at most {mb} MB."},
+ "home.theme.noneShort": {"text": "Brak", "from": "None"},
+ "tv.home.theme.hint": {"text": "Motyw Hearth z folderu /media/developer/themes na telewizorze: kolory, czcionki, tapeta oraz kolejność, nazwy i ikony aplikacji. Brak przywraca to, co motyw zastąpił.", "from": "A Hearth theme from /media/developer/themes on the TV: colours, fonts, wallpaper and the apps’ order, names and icons. None puts back what it replaced."},
+ "tv.home.theme.press": {"text": "Naciśnij OK: {name}", "from": "Press OK for {name}"}
 }

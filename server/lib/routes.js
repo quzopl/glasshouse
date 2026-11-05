@@ -1186,7 +1186,9 @@ function handleHomeRoute(req, res, u, pathname) {
         st.lgHomeAvailable = lgHomeLayoutAvailable() || tileHidingAvailable();
         // Open Home at power-on is on the Home tab too, wherever LG has it.
         if (st.lgHomeAvailable || st.homeAutoLaunch !== undefined) st.available = true;
-        withLgHome(function () {
+        withLgHome(function () { homeModule.theme.listZips(function (zips) {
+          // The TV app steps through Hearth's zips with OK.
+          st.themeZips = zips;
           if (wants.indexOf('catalogue') === -1) return reply(st);
           homeModule.catalogue(function (c) {
             st.catalogue = c;
@@ -1196,7 +1198,7 @@ function handleHomeRoute(req, res, u, pathname) {
               reply(st);
             });
           });
-        });
+        }); });
         function withLgHome(next) {
           if (wants.indexOf('lghome') === -1 || !st.lgHomeAvailable) return next();
           lgHomeOptions(st.enabled, function (lg) {

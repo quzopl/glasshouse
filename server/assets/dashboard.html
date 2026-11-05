@@ -1182,6 +1182,17 @@ function glasshouseHomeRows(d) {
                press: t('tv.home.colours.press', 'Press OK for {name}', { name: lookNames[nextLook.id] || nextLook.id }),
                hint: t('home.colours.tvHint', 'The text and accent on Glasshouse Home. Any colour can be picked on the browser dashboard’s Home tab.') });
     }
+    // OK steps through the Hearth theme zips in /media/developer/themes, then none.
+    var zips = d.themeZips || [], th = d.theme, ti = -1;
+    for (var zi = 0; zi < zips.length; zi++) if (th && th.source === zips[zi].name) ti = zi;
+    if (zips.length || th) {
+      var nextZip = ti + 1 < zips.length ? zips[ti + 1].name : null;
+      var zipName = function (n) { return n ? n.replace(/\.zip$/i, '') : t('home.theme.noneShort', 'None'); };
+      r.push({ label: t('home.theme.title', 'Hearth theme'), value: th ? th.name : zipName(null), cls: 'act',
+               act: can ? 'homeTheme' : null, key: nextZip,
+               press: t('tv.home.theme.press', 'Press OK for {name}', { name: zipName(nextZip) }),
+               hint: t('tv.home.theme.hint', 'A Hearth theme from /media/developer/themes on the TV: colours, fonts, wallpaper and the apps\u2019 order, names and icons. None puts back what it replaced.') });
+    }
     // OK steps down from full to off; the browser dashboard's slider sets any 5% step.
     var dark = typeof d.layout.darkening === 'number' ? d.layout.darkening : 100;
     var darkNext = dark > 75 ? 75 : dark > 50 ? 50 : dark > 25 ? 25 : dark > 0 ? 0 : 100;
@@ -3208,6 +3219,9 @@ function activate() {
     case 'homeColours':
       // The view's own look is saved as none chosen.
       return homeLayout({ colours: r.key.own ? null : { text: r.key.text, accent: r.key.accent } });
+    case 'homeTheme':
+      return r.key ? sendPost('/api/home/theme/load', { name: r.key }, t('home.theme.loaded', 'Theme loaded. Home updates within a few seconds.'))
+        : sendPost('/api/home/theme/remove', {}, t('home.theme.removed', 'Theme removed.'));
     case 'homeOpen':
       return send({ action: 'launchApp', value: 'com.webos.app.home' });
     case 'homeRowUp':
