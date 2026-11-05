@@ -31,6 +31,7 @@ var msg = require('./say').msg;
 var names = require('./names');
 var writeJsonAtomic = require('./util').writeJsonAtomic;
 var wallpapers = require('./home-wallpapers');
+var homeTheme = require('./home-theme');
 var takeover = require('./home-takeover');
 var recent = require('./home-recent');
 var recentApps = require('./home-recent-apps');
@@ -501,7 +502,8 @@ function layoutVersion() {
   readConfig();
   return String(configMtime) + (search.blocked() ? '-search-blocked' : '') +
     (iptvModule ? '-tv' + iptvModule.revision() : '') +
-    (listsRevision ? '-lists' + listsRevision : '');
+    (listsRevision ? '-lists' + listsRevision : '') +
+    (homeTheme.revision() ? '-theme' + homeTheme.revision() : '');
 }
 
 function saveConfig() {
@@ -876,11 +878,11 @@ function build(c, apps, devs, chans, recs, tv) {
   });
   order.rec = cards.map(function (r) { return r.id; });
   return {
-    apps: appList.map(function (a) {
+    apps: homeTheme.dressApps(appList.map(function (a) {
       var app = { id: a.id, title: a.title, icon: a.icon ? '/api/home/icon?id=' + encodeURIComponent(a.id) : null };
       if (a.overlay) app.overlay = true;
       return app;
-    }),
+    })),
     devices: devs || [],
     channels: picked,
     recommended: cards,
@@ -2315,6 +2317,7 @@ function status(cb) {
         history: !!(historyModule && historyModule.enabled && historyModule.enabled()),
         wallpapers: wallpapers.status(),
         colourPresets: COLOUR_PRESETS,
+        theme: homeTheme.summary(),
         layout: layoutOf(c)
       };
       if (c.lgAutoLaunch === 'on' || hal === 'on' || hal === 'off') {
@@ -2326,13 +2329,59 @@ function status(cb) {
 }
 
 /*
+ * A Hearth theme (lib/home-theme) put on Home. Its colours and its apps'
+ * order go into the layout, where both dashboards can still change them;
+ * what they were before the first theme is kept with it, and removing the
+ * theme puts that back. Its names, icons, fonts and wallpaper are read from
+ * the theme while it is on.
+ */
+function loadTheme(buf, source, cb) {
+  var sup = supported();
+  if (!sup.ok) return cb({ ok: false, error: sup.reason });
+  var parsed = homeTheme.parse(buf);
+  if (parsed.errors) return cb({ ok: false, error: msg('srv.home.themeRefused', 'The theme was not loaded.'), errors: parsed.errors });
+  var c = readConfig(), had = homeTheme.current(), th = parsed.theme;
+  var before = had ? had.before : { colours: c.colours, order: c.order.app.slice() };
+  try { homeTheme.store(parsed, source, before); }
+  catch (e) { return cb({ ok: false, error: e.message }); }
+  if (had) restoreBefore(c, before);
+  if (th.colours && (th.colours.text || th.colours.accent)) {
+    c.colours = {
+      text: th.colours.text || (c.colours && c.colours.text) || '#ece7df',
+      accent: th.colours.accent || (c.colours && c.colours.accent) || '#e9ad55'
+    };
+  }
+  if (th.order && th.order.length) {
+    c.order.app = th.order.concat(c.order.app.filter(function (id) { return th.order.indexOf(id) === -1; }));
+  }
+  saveConfig();
+  console.log('home: theme "' + th.name + '" loaded' + (source ? ' from ' + source : ''));
+  cb({ ok: true, theme: homeTheme.summary() });
+}
+
+function restoreBefore(c, before) {
+  if (Object.prototype.hasOwnProperty.call(before, 'colours')) c.colours = validColours(before.colours);
+  if (isArray(before.order)) c.order.app = stringList(before.order);
+}
+
+function removeTheme(cb) {
+  var before = homeTheme.clear();
+  if (before) {
+    restoreBefore(readConfig(), before);
+    saveConfig();
+    console.log('home: theme removed');
+  }
+  cb({ ok: true, theme: null });
+}
+
+/*
  * What the view's catalogue carries beside the rows, without status()'s two
  * luna calls: just after a start they wait their turn behind every other
  * (lib/children), 3.7 s on a B8 (webOS 4.4.3).
  */
 function viewStatus() {
   var c = readConfig();
-  return { layout: layoutOf(c), enabled: c.enabled, supported: supported(), wallpapers: wallpapers.status() };
+  return { layout: layoutOf(c), enabled: c.enabled, supported: supported(), wallpapers: wallpapers.status(), theme: homeTheme.view() };
 }
 
 // LG's Home reads its layout from /mnt/lg/cmn_data/manifest on webOS 9 only;
@@ -2347,6 +2396,7 @@ function init(opts) {
   iptvModule = opts.iptv || null;
   if (opts.stateDir) stateDir = opts.stateDir;
   wallpapers.init(stateDir);
+  homeTheme.init({ stateDir: stateDir, themesDir: opts.themesDir });
   recent.init(stateDir, opts.now);
   recentApps.init({ luna: lunaFn, excluded: function () { return readConfig().excludedRecents; } });
   recommended.init({ luna: lunaFn });
@@ -2558,6 +2608,9 @@ module.exports = {
   status: status,
   catalogue: catalogue,
   viewStatus: viewStatus,
+  loadTheme: loadTheme,
+  removeTheme: removeTheme,
+  theme: homeTheme,
   channelList: channelList,
   guide: guide,
   now: now,

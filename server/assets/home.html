@@ -563,6 +563,7 @@ body.no-drift #wall .layer{-webkit-animation:none;animation:none}
 body.no-crossfade #wall .layer{-webkit-transition:none;transition:none}
 body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide #folderGrid,body.no-slide #hits{-webkit-transition:none;transition:none}
 </style>
+<style id="themeLook"></style>
 </head>
 <body>
 <div id="stage" class="no-search no-clock">
@@ -4268,28 +4269,84 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
     return slot;
   }
   function updateWall() {
-    var slot = wallSlot();
+    var slot = wallSlot(), tw = theme && theme.wallpaper;
+    if (tw) {
+      var n = tw.urls.length, k = themeSlide % n;
+      if (tw.shuffle) {
+        if (!themeOrder || themeOrder.length !== n) themeOrder = shuffled(n);
+        k = themeOrder[k];
+      }
+      return showWall('theme@' + theme.revision + '@' + k + '@' + slot.strength, tw.urls[k], slot.strength, function () { return theme && theme.wallpaper === tw; });
+    }
     if (!wallAvailable || (wallSlots && !wallSlots[slot.key])) {
       var blank = $('wall').querySelectorAll('.layer');
       for (var b = 0; b < blank.length; b++) { blank[b].style.opacity = 0; blank[b].style.backgroundImage = ''; }
       wallShown = null;
       return;
     }
-    var revision = wallRevision, id = slot.key + '@' + slot.strength + '@' + revision;
+    var revision = wallRevision;
+    showWall(slot.key + '@' + slot.strength + '@' + revision, '/api/home/wallpaper?slot=' + slot.key + '&v=' + encodeURIComponent(revision),
+      slot.strength, function () { return !theme || !theme.wallpaper; } , function () {
+        return wallAvailable && wallRevision === revision && wallSlot().key === slot.key;
+      });
+  }
+
+  // Cross-fades to the picture at src once it has loaded, if still wanted then.
+  function showWall(id, src, strength, current, stillSlot) {
     if (id === wallShown) return;
     var layers = $('wall').querySelectorAll('.layer');
     var next = layers[1 - wallFront], prev = layers[wallFront];
-    var src = '/api/home/wallpaper?slot=' + slot.key + '&v=' + encodeURIComponent(revision);
     var img = new Image();
     img.onload = function () {
-      if (!wallAvailable || wallRevision !== revision || wallSlot().key !== slot.key) return;
+      if (!current() || (stillSlot && !stillSlot())) return;
       wallShown = id;
       next.style.backgroundImage = 'url(' + src + ')';
-      next.style.opacity = slot.strength;
+      next.style.opacity = strength;
       prev.style.opacity = 0;
       wallFront = 1 - wallFront;
     };
     img.src = src;
+  }
+
+  // ---------------------------------------------------------------- Hearth theme
+
+  /*
+   * A Hearth theme (lib/home-theme): its fonts on the clock and date and on
+   * the tiles' names, its background behind the wallpaper, and its own
+   * picture or slideshow in place of the chosen wallpaper. Its colours, and
+   * the apps' order, names and icons, come with the layout and the rows.
+   */
+  var theme = null, themeShown = '', themeSlide = 0, themeOrder = null, themeTimer = null;
+  function shuffled(n) {
+    var out = [], i, j, x;
+    for (i = 0; i < n; i++) out.push(i);
+    for (i = n - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); x = out[i]; out[i] = out[j]; out[j] = x; }
+    return out;
+  }
+  function applyTheme(th) {
+    theme = th || null;
+    var key = th ? th.revision : '';
+    if (key === themeShown) return;
+    themeShown = key;
+    var css = '';
+    if (th) {
+      (th.fonts || []).forEach(function (f) {
+        css += "@font-face{font-family:'gh-theme-" + f.id + "';src:url('" + f.url + "') format('" + f.format + "');font-display:swap}";
+      });
+      if (th.widgetFont) css += "#clock,#date{font-family:'gh-theme-" + th.widgetFont + "',sans-serif}";
+      if (th.namesFont) css += ".tile .nm{font-family:'gh-theme-" + th.namesFont + "',sans-serif}";
+      if (th.bg) css += '#stage{background:' + th.bg + '}';
+    }
+    $('themeLook').textContent = css;
+    themeSlide = 0;
+    themeOrder = null;
+    clearInterval(themeTimer);
+    themeTimer = null;
+    var w = th && th.wallpaper;
+    if (w && w.urls.length > 1) {
+      themeTimer = setInterval(function () { if (!document.hidden) { themeSlide++; updateWall(); } }, w.intervalSec * 1000);
+    }
+    wallShown = null;
   }
 
   // ---------------------------------------------------------------- colours
@@ -4372,6 +4429,7 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
       applyMotion(layout);
       applyColours(layout.colours);
       applyDarkening(layout.darkening);
+      applyTheme(r.theme);
       stageClass();
       renderNow();
       if (r.layoutVersion) layoutVersion = r.layoutVersion;
