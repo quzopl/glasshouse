@@ -300,7 +300,7 @@ A theme's cities are offered as places for the weather. Icon styles and the icon
 
 ## Weather
 
-The web dashboard's **Weather** section puts the weather under the date on Glasshouse Home: the conditions and temperature now and today's high and low, from [Open-Meteo](https://open-meteo.com), which needs no account, read at most every 20 minutes while it is on. The place is found by name, through Open-Meteo's geocoding, or picked from the cities of the Hearth theme that is on. Celsius or Fahrenheit. In the TV app, **Weather** on the Home tab switches it on and off once a place is chosen, and **Weather place** steps through the theme's cities.
+The web dashboard's **Weather** section puts the weather on Glasshouse Home, right of the clock: the conditions and temperature now, with feels-like, wind and humidity, and five days ahead, from [Open-Meteo](https://open-meteo.com), which needs no account, read at most every 20 minutes while it is on. The place is found by name, through Open-Meteo's geocoding, or picked from the cities of the Hearth theme that is on. Celsius or Fahrenheit. In the TV app, **Weather** on the Home tab switches it on and off once a place is chosen, and **Weather place** steps through the theme's cities.
 
 ## Wallpapers
 

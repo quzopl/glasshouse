@@ -1,9 +1,9 @@
 /*
  * lib/home-weather.js - the weather beside Glasshouse Home's clock.
  *
- * From Open-Meteo (open-meteo.com), which needs no key: the temperature and
- * conditions now and today's high and low for one place, read when the view
- * asks and at most every 20 minutes. The place is chosen on the dashboards,
+ * From Open-Meteo (open-meteo.com), which needs no key: the conditions now
+ * (temperature, feels-like, wind, humidity) and five days' highs and lows
+ * for one place, read when the view asks and at most every 20 minutes. The place is chosen on the dashboards,
  * found by name with Open-Meteo's geocoding, or taken from a Hearth theme's
  * cities. Kept in stateDir/home-weather.json as { on, place, units }.
  *
@@ -85,8 +85,9 @@ function refresh(cb) {
   reading = true;
   var place = s.place;
   var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + place.lat + '&longitude=' + place.lon +
-    '&current=temperature_2m,weather_code,is_day&daily=temperature_2m_max,temperature_2m_min' +
-    '&timezone=auto&forecast_days=1' + (s.units === 'f' ? '&temperature_unit=fahrenheit' : '');
+    '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5' +
+    (s.units === 'f' ? '&temperature_unit=fahrenheit&wind_speed_unit=mph' : '');
   getJson(url, function (err, doc) {
     reading = false;
     // Answered for a place since changed.
@@ -97,12 +98,24 @@ function refresh(cb) {
       if (err) console.log('home: weather not read: ' + err.message);
       return cb && cb();
     }
+    var days = [];
+    if (day && day.time) {
+      for (var i = 0; i < day.time.length && i < 5; i++) {
+        if (typeof day.temperature_2m_max[i] !== 'number' || typeof day.temperature_2m_min[i] !== 'number') break;
+        days.push({ date: String(day.time[i]), kind: kindOf(day.weather_code ? day.weather_code[i] : 3),
+          high: Math.round(day.temperature_2m_max[i]), low: Math.round(day.temperature_2m_min[i]) });
+      }
+    }
     now = {
       temp: Math.round(cur.temperature_2m),
+      feels: typeof cur.apparent_temperature === 'number' ? Math.round(cur.apparent_temperature) : null,
+      humidity: typeof cur.relative_humidity_2m === 'number' ? Math.round(cur.relative_humidity_2m) : null,
+      wind: typeof cur.wind_speed_10m === 'number' ? Math.round(cur.wind_speed_10m) : null,
       kind: kindOf(cur.weather_code),
       day: cur.is_day !== 0,
-      high: day && day.temperature_2m_max ? Math.round(day.temperature_2m_max[0]) : null,
-      low: day && day.temperature_2m_min ? Math.round(day.temperature_2m_min[0]) : null
+      high: days.length ? days[0].high : null,
+      low: days.length ? days[0].low : null,
+      days: days
     };
     readAt = Date.now();
     failedAt = 0;
@@ -124,7 +137,9 @@ function view() {
   var s = read();
   tick();
   if (!s.on || !s.place || !now) return null;
-  return { place: s.place.name, temp: now.temp, kind: now.kind, day: now.day, high: now.high, low: now.low, units: s.units };
+  return { place: s.place.name, temp: now.temp, feels: now.feels, humidity: now.humidity, wind: now.wind,
+    windUnit: s.units === 'f' ? 'mph' : 'km/h', kind: now.kind, day: now.day, high: now.high, low: now.low,
+    days: now.days, units: s.units };
 }
 
 // For the dashboards.
