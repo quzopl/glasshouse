@@ -2049,6 +2049,13 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
     v.defaultMuted = true;
     s.setAttribute('type', target.port ? 'service/webos-external' : 'service/webos-broadcast-preview');
     s.setAttribute('src', target.port ? 'ext://hdmi:' + target.port : 'tv://' + target.item.id);
+    // Placed before it loads: on a CX (webOS 5) a video moved to another
+    // parent after load() and play() pauses at once and drops its source
+    // (networkState NO_SOURCE, no loadstart), so a preview in the tile
+    // stayed blank. Shown first, the same element plays there.
+    $('preview').className = 'on';
+    tilePreview.inTile = inTile();
+    placePreview();
     v.appendChild(s);
     v.onplaying = function () {
       if (!current() || tilePreview.playing) return;
@@ -2062,9 +2069,6 @@ body.no-slide #recents,body.no-slide #finder,body.no-slide #folder,body.no-slide
     // Promise or undefined, by engine; the events say how it went.
     var played = v.play();
     if (played && played.then) played.then(null, function () {});
-    $('preview').className = 'on';
-    tilePreview.inTile = inTile();
-    placePreview();
     $('now').className = tilePreview.inTile ? '' : 'previewing';
     renderNow();
     tilePreview.timer = setTimeout(function () { if (current() && !tilePreview.playing) blankPreview(); }, PREVIEW_START_MS);
