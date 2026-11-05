@@ -150,7 +150,16 @@ The TV asks `api.open-meteo.com` at most every 20 minutes while the weather is o
 
 With **Live preview** and **Preview in the tile** on, the input's picture stayed blank on webOS 5: the page moved the video into the tile after starting it, and webOS 5's browser stops a media element that is moved. The preview is now placed first and started after. Tested on an LG OLED55CX (webOS 5, firmware 04.64.00).
 
+<img src="docs/screenshots/fork/live-preview-tile.jpg" width="900" alt="The Inputs row with the MIBOX4 tile in focus, showing the Mi Box's home screen live in the tile">
+
+*The MIBOX4 tile in focus, playing HDMI 2 in the tile. The TV cannot screenshot its video plane (HDMI is drawn under the page and kept out of captures), so this image is a composite of two real screenshots taken a moment apart: Glasshouse Home, and the Mi Box's own screen taken over ADB, placed where the TV draws it (the tile, `object-fit: cover`).*
+
 ## Screenshots
+
+<p align="center"><img src="docs/screenshots/fork/live-preview.jpg" width="900" alt="Glasshouse Home with the Polar Night theme, the MIBOX4 tile in focus playing HDMI 2"></p>
+
+*Live preview in the tile (composite: the Mi Box's screen placed in the tile, see [Live preview on webOS 5](#live-preview-on-webos-5)).*
+
 
 Glasshouse Home in English, as served by an LG OLED55CX: the TV's own Home page and data, drawn in a desktop browser at 1920 × 1080 so that the language could be English (the TV runs in Polish). The live HDMI preview cannot be shown in a screenshot: the TV captures only its pages, not the video plane, so the tiles show no picture here.
 
