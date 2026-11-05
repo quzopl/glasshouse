@@ -1710,6 +1710,9 @@ button.home-look:active{background:none}
 .home-look.picked .home-look-name{opacity:1;font-weight:600}
 .home-look:disabled{cursor:default;opacity:.6}
 .home-custom{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin:4px 0 8px}
+/* Theme zips and weather places: as wide as their names, wrapping. */
+.home-places{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.home-places button{flex:0 1 auto;padding:10px 16px;text-transform:none;letter-spacing:.02em}
 .home-custom label{display:flex;align-items:center;gap:8px}
 .home-custom input[type=color]{width:40px;height:28px;padding:0;border:1px solid var(--edge);border-radius:6px;background:none}
 

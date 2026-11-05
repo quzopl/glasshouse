@@ -1,0 +1,39 @@
+{
+  "paging": {
+    "page": 1,
+    "count": 1,
+    "maxPage": 1,
+    "itemsTotal": 1,
+    "prevUrl": null,
+    "nextUrl": null
+  },
+  "packages": [
+    {
+      "id": "io.github.rorygallagher2024.lg-webos-dashboard",
+      "title": "Glasshouse",
+      "iconUri": "https://raw.githubusercontent.com/quzopl/glasshouse/main/server/assets/dashboard-app/assets/icon130.png",
+      "manifestUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.1/io.github.rorygallagher2024.lg-webos-dashboard.manifest.json",
+      "manifest": {
+        "id": "io.github.rorygallagher2024.lg-webos-dashboard",
+        "version": "0.139.1",
+        "type": "web",
+        "title": "Glasshouse",
+        "appDescription": "Own the glass. Dashboard, privacy controls and Home Assistant bridge for rooted LG TVs, with Hearth themes and weather on Glasshouse Home",
+        "iconUri": "https://raw.githubusercontent.com/quzopl/glasshouse/main/server/assets/dashboard-app/assets/icon130.png",
+        "sourceUrl": "https://github.com/quzopl/glasshouse",
+        "rootRequired": true,
+        "ipkUrl": "https://github.com/quzopl/glasshouse/releases/download/v0.139.1/io.github.rorygallagher2024.lg-webos-dashboard_0.139.1_all.ipk",
+        "ipkHash": {
+          "sha256": "7fe7ea538774b9564a65d6266143b152320a6384a059f65d86d96efe02bb5225"
+        },
+        "ipkSize": 2094428
+      },
+      "pool": "main",
+      "requirements": {
+        "webosRelease": ">=4.0"
+      },
+      "shortDescription": "Own the glass. Dashboard, privacy controls and Home Assistant bridge for rooted LG TVs, with Hearth themes and weather on Glasshouse Home",
+      "fullDescriptionUrl": "https://github.com/quzopl/glasshouse#readme"
+    }
+  ]
+}
