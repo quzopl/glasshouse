@@ -1201,7 +1201,7 @@ function glasshouseHomeRows(d) {
                value: !wx.place ? t('tv.home.weather.noPlace', 'No place') : wx.on ? t('common.on', 'On') : t('common.off', 'Off'),
                cls: wx.place ? (wx.on ? 'on' : 'off') : '', act: can && wx.place ? 'homeWeather' : null, on: wx.on,
                press: wx.on ? t('tv.press.switchOff', 'Press OK to switch off') : t('tv.press.switchOn', 'Press OK to switch on'),
-               hint: wx.place ? t('tv.home.weather.hint', 'Now and today\u2019s range for {name}, under the date on Glasshouse Home.', { name: wx.place.name })
+               hint: wx.place ? t('tv.home.weather.hint', 'Now and five days ahead for {name}, right of the clock on Glasshouse Home.', { name: wx.place.name })
                  : t('tv.home.weather.choose', 'Choose the place on the browser dashboard\u2019s Home tab.') });
       var cities = (th && th.cities) || [], ci = -1;
       for (var cj = 0; cj < cities.length; cj++) if (wx.place && cities[cj].lat === wx.place.lat && cities[cj].lon === wx.place.lon) ci = cj;

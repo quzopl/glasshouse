@@ -16,8 +16,8 @@ var dir = path.join(os.tmpdir(), 'gh-weather-' + process.pid);
 fs.mkdirSync(dir);
 var asked = [];
 var answer = {
-  current: { temperature_2m: 7.6, weather_code: 61, is_day: 1 },
-  daily: { temperature_2m_max: [10.4], temperature_2m_min: [2.2] }
+  current: { temperature_2m: 7.6, apparent_temperature: 4.9, relative_humidity_2m: 81, wind_speed_10m: 13.7, weather_code: 61, is_day: 1 },
+  daily: { time: ['2026-11-05', '2026-11-06'], weather_code: [61, 0], temperature_2m_max: [10.4, 12], temperature_2m_min: [2.2, 3.6] }
 };
 function getJson(url, cb) {
   asked.push(url);
@@ -47,14 +47,17 @@ weather.search('Warszawa', 'pl', function (r) {
       // The reading set() starts answers on the next turn.
       setTimeout(function () {
         assert.ok(/api\.open-meteo\.com\/v1\/forecast\?latitude=52\.2298&longitude=21\.0118&current=/.test(asked[1]));
-        assert.deepEqual(weather.view(), { place: 'Warszawa', temp: 8, kind: 'rain', day: true, high: 10, low: 2, units: 'c' });
-        console.log('  ✓ a place found by name, and now and today\'s range read for it');
+        var v = weather.view();
+        assert.deepEqual([v.place, v.temp, v.kind, v.day, v.high, v.low, v.units], ['Warszawa', 8, 'rain', true, 10, 2, 'c']);
+        assert.deepEqual(v.days, [{ date: '2026-11-05', kind: 'rain', high: 10, low: 2 }, { date: '2026-11-06', kind: 'clear', high: 12, low: 4 }]);
+        assert.deepEqual([v.feels, v.wind, v.humidity, v.windUnit], [5, 14, 81, 'km/h']);
+        console.log('  ✓ a place found by name, and now and five days read for it');
 
         weather.init({ stateDir: dir, getJson: getJson });
         assert.deepEqual(weather.status().place, r.places[0], 'the place is kept');
         weather.set({ units: 'f' }, function () {
           setTimeout(function () {
-            assert.ok(/temperature_unit=fahrenheit/.test(asked[asked.length - 1]), 'units are asked for');
+            assert.ok(/temperature_unit=fahrenheit&wind_speed_unit=mph/.test(asked[asked.length - 1]), 'units are asked for');
             weather.set({ on: false }, function () {
               assert.strictEqual(weather.view(), null);
               fs.unlinkSync(path.join(dir, 'home-weather.json'));
