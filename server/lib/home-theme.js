@@ -64,11 +64,13 @@ function themeFile() { return path.join(themeDir(), 'theme.json'); }
 function filesDir() { return path.join(themeDir(), 'files'); }
 
 /*
- * A zip's files as { name: Buffer }, from its central directory: stored and
- * deflated entries only, no encryption, no zip64. errors gets each problem.
+ * A zip's entries from its central directory, still packed: stored and
+ * deflated only, no encryption, no zip64. The sizes it states are held to
+ * MAX_UNPACKED here, and inflate holds each entry to its stated size.
+ * errors gets each problem.
  */
-function unzip(buf, errors) {
-  var out = {}, total = 0, i, eocd = -1;
+function entries(buf, errors) {
+  var out = [], total = 0, i, eocd = -1;
   for (i = buf.length - 22; i >= 0 && i >= buf.length - 65557; i--) {
     if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; }
   }
@@ -95,13 +97,53 @@ function unzip(buf, errors) {
     if (local + 30 > buf.length || buf.readUInt32LE(local) !== 0x04034b50) { errors.push(name + ': damaged'); continue; }
     var start = local + 30 + buf.readUInt16LE(local + 26) + buf.readUInt16LE(local + 28);
     if (start + csize > buf.length) { errors.push(name + ': damaged'); continue; }
-    var data = buf.slice(start, start + csize);
-    try { data = method === 8 ? zlib.inflateRawSync(data) : data; }
-    catch (e) { errors.push(name + ': damaged'); continue; }
-    if (data.length !== size) { errors.push(name + ': damaged'); continue; }
-    out[name] = data;
+    out.push({ name: name, method: method, size: size, data: buf.slice(start, start + csize) });
   }
   return out;
+}
+
+/*
+ * One entry unpacked, stopped as soon as it gives more than the size the zip
+ * states for it: a zip bomb states a small size and unpacks to gigabytes,
+ * and node 0.12's inflateRawSync has no limit on what it gives.
+ */
+function inflate(entry, cb) {
+  if (entry.method === 0) return cb(entry.data.length === entry.size ? null : new Error('damaged'), entry.data);
+  var inf = zlib.createInflateRaw(), chunks = [], got = 0, done = false;
+  function finish(err) {
+    if (done) return;
+    done = true;
+    if (err) {
+      inf.removeAllListeners('data');
+      try { inf.close(); } catch (e) { /* already closed */ }
+      return cb(err);
+    }
+    cb(got === entry.size ? null : new Error('damaged'), Buffer.concat(chunks, got));
+  }
+  inf.on('data', function (d) {
+    got += d.length;
+    if (got > entry.size) return finish(new Error('unpacks to more than it states'));
+    chunks.push(d);
+  });
+  inf.on('error', function () { finish(new Error('damaged')); });
+  inf.on('end', function () { finish(null); });
+  inf.end(entry.data);
+}
+
+// The zip's files as cb({ name: Buffer }), or cb(null) with errors.
+function unzip(buf, errors, cb) {
+  var list = entries(buf, errors);
+  if (!list) return cb(null);
+  var out = {}, i = 0;
+  (function next() {
+    if (i >= list.length) return cb(out);
+    var e = list[i++];
+    inflate(e, function (err, data) {
+      if (err) errors.push(e.name + ': ' + err.message);
+      else out[e.name] = data;
+      next();
+    });
+  })();
 }
 
 // Hearth's rules for a name in the zip; '' when it passes.
@@ -131,6 +173,7 @@ function checkManifest(m, files, errors) {
   if (m.format !== 1) errors.push('manifest: "format" must be 1');
   if (!textOf(m.name, 40)) errors.push('manifest: "name" must be text of 1 to 40 characters');
   if (m.author !== undefined && !textOf(m.author, 60)) errors.push('manifest: "author" must be text of at most 60 characters');
+  /** @type {any} */
   var out = { name: String(m.name || ''), author: typeof m.author === 'string' ? m.author : '', ignored: [] };
   function file(rel, re, where) {
     if (typeof rel !== 'string' || !files[rel]) { errors.push(where + ': file "' + rel + '" is not in the zip'); return null; }
@@ -283,24 +326,25 @@ function checkManifest(m, files, errors) {
 }
 
 /*
- * A zip checked into a theme: { theme, files } or { errors }, with Hearth's
- * first six problems at most, as its pop-up shows.
+ * A zip checked into a theme: cb({ theme, files }) or cb({ errors }), with
+ * Hearth's first six problems at most, as its pop-up shows.
  */
-function parse(buf) {
+function parse(buf, cb) {
   var errors = [];
-  if (!buf || buf.length < 22) return { errors: ['not a zip file'] };
-  if (buf.length > MAX_ZIP) return { errors: ['the zip is larger than ' + (MAX_ZIP >> 20) + ' MB'] };
-  var files = unzip(buf, errors);
-  if (!files) return { errors: errors.slice(0, 6) };
-  var m = null;
-  if (!files['manifest.json']) errors.push('manifest.json is not at the top of the zip');
-  else {
-    try { m = JSON.parse(files['manifest.json'].toString('utf8').replace(/^﻿/, '')); }
-    catch (e) { errors.push('manifest.json is not valid JSON'); }
-  }
-  var theme = m ? checkManifest(m, files, errors) : null;
-  if (errors.length) return { errors: errors.slice(0, 6) };
-  return { theme: theme, files: files };
+  if (!buf || buf.length < 22) return cb({ errors: ['not a zip file'] });
+  if (buf.length > MAX_ZIP) return cb({ errors: ['the zip is larger than ' + (MAX_ZIP >> 20) + ' MB'] });
+  unzip(buf, errors, function (files) {
+    if (!files) return cb({ errors: errors.slice(0, 6) });
+    var m = null;
+    if (!files['manifest.json']) errors.push('manifest.json is not at the top of the zip');
+    else {
+      try { m = JSON.parse(files['manifest.json'].toString('utf8').replace(/^\ufeff/, '')); }
+      catch (e) { errors.push('manifest.json is not valid JSON'); }
+    }
+    var theme = m ? checkManifest(m, files, errors) : null;
+    if (errors.length) return cb({ errors: errors.slice(0, 6) });
+    cb({ theme: theme, files: files });
+  });
 }
 
 // The files the theme uses: what is kept on the TV.

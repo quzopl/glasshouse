@@ -2338,8 +2338,13 @@ function status(cb) {
 function loadTheme(buf, source, cb) {
   var sup = supported();
   if (!sup.ok) return cb({ ok: false, error: sup.reason });
-  var parsed = homeTheme.parse(buf);
-  if (parsed.errors) return cb({ ok: false, error: msg('srv.home.themeRefused', 'The theme was not loaded.'), errors: parsed.errors });
+  homeTheme.parse(buf, function (parsed) {
+    if (parsed.errors) return cb({ ok: false, error: msg('srv.home.themeRefused', 'The theme was not loaded.'), errors: parsed.errors });
+    putTheme(parsed, source, cb);
+  });
+}
+
+function putTheme(parsed, source, cb) {
   var c = readConfig(), had = homeTheme.current(), th = parsed.theme;
   var before = had ? had.before : { colours: c.colours, order: c.order.app.slice() };
   try { homeTheme.store(parsed, source, before); }

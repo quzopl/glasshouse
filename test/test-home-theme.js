@@ -14,7 +14,7 @@ var theme = require('../server/lib/home-theme');
 console.log('Running test-home-theme.js ...');
 
 // A zip of { name: text or Buffer }, deflated, as Hearth's export writes one.
-function zip(files) {
+function zip(files, statedSize) {
   var parts = [], dir = [], off = 0;
   Object.keys(files).forEach(function (name) {
     var data = Buffer.isBuffer(files[name]) ? files[name] : new Buffer(files[name]);
@@ -24,7 +24,7 @@ function zip(files) {
     local.writeUInt32LE(0x04034b50, 0);
     local.writeUInt16LE(8, 8);
     local.writeUInt32LE(packed.length, 18);
-    local.writeUInt32LE(data.length, 22);
+    local.writeUInt32LE(statedSize || data.length, 22);
     local.writeUInt16LE(nb.length, 26);
     parts.push(local, nb, packed);
     var central = new Buffer(46);
@@ -32,7 +32,7 @@ function zip(files) {
     central.writeUInt32LE(0x02014b50, 0);
     central.writeUInt16LE(8, 10);
     central.writeUInt32LE(packed.length, 20);
-    central.writeUInt32LE(data.length, 24);
+    central.writeUInt32LE(statedSize || data.length, 24);
     central.writeUInt16LE(nb.length, 28);
     central.writeUInt32LE(off, 42);
     dir.push(central, nb);
@@ -67,7 +67,7 @@ function fullZip(manifest) {
   });
 }
 
-var parsed = theme.parse(fullZip());
+function step1(parsed) {
 assert.ok(!parsed.errors, JSON.stringify(parsed.errors));
 var th = parsed.theme;
 assert.deepEqual(th.colours, { bg: '#08191b', accent: '#6fd3cc', text: '#ffb74d' });
@@ -78,27 +78,51 @@ assert.deepEqual(th.names, { 'youtube.leanback.v4': 'Videos' });
 assert.deepEqual(th.icons, { netflix: 'icons/netflix.png' });
 assert.deepEqual(th.ignored, ['colors.icon', 'fonts.names (inter)', 'iconStyle', 'cities']);
 console.log('  ✓ a full theme: its palette, fonts, slideshow (pictures directly in the folder), apps and icons');
-
-function refused(files, why) {
-  var r = theme.parse(zip(files));
-  assert.ok(r.errors && r.errors.join('\n').indexOf(why) !== -1, why + ' in ' + JSON.stringify(r.errors));
+step2(parsed);
 }
-function manifest(m) { return { 'manifest.json': JSON.stringify(m) }; }
-refused({ 'theme/manifest.json': '{}' }, 'manifest.json is not at the top');
-refused({ 'manifest.json': '{', 'a.txt': '' }, 'not valid JSON');
-refused(manifest({ format: 2, name: 'x' }), '"format" must be 1');
-refused(manifest({ format: 1, name: 'x', colour: {} }), 'unknown key "colour"');
-refused(manifest({ format: 1, name: 'x', colors: { widget: 'white', widgetInk: '#ffffff' } }), 'not both');
-refused(manifest({ format: 1, name: 'x', icons: [{ app: 'netflix', file: 'icons/none.png' }] }), 'is not in the zip');
-refused({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'run.sh': 'echo' }, 'run.sh: not allowed');
-refused({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), '../evil.png': PNG }, 'not a plain relative path');
-refused({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'page.html': '<script>' }, 'page.html: not allowed');
-assert.deepEqual(theme.parse(new Buffer('not a zip at all, longer than a header')).errors, ['not a zip file']);
-var mac = zip({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), '__MACOSX/._manifest.json': 'x', '.DS_Store': 'x' });
-assert.ok(!theme.parse(mac).errors, 'what macOS adds to a zip is passed over');
-console.log('  ✓ refused as Hearth refuses: unknown keys, missing files, scripts and pages, paths out of the zip');
 
-var dir = path.join(os.tmpdir(), 'gh-theme-' + process.pid);
+var REFUSED = [
+  [{ 'theme/manifest.json': '{}' }, 'manifest.json is not at the top'],
+  [{ 'manifest.json': '{', 'a.txt': '' }, 'not valid JSON'],
+  [manifest({ format: 2, name: 'x' }), '"format" must be 1'],
+  [manifest({ format: 1, name: 'x', colour: {} }), 'unknown key "colour"'],
+  [manifest({ format: 1, name: 'x', colors: { widget: 'white', widgetInk: '#ffffff' } }), 'not both'],
+  [manifest({ format: 1, name: 'x', icons: [{ app: 'netflix', file: 'icons/none.png' }] }), 'is not in the zip'],
+  [{ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'run.sh': 'echo' }, 'run.sh: not allowed'],
+  [{ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), '../evil.png': PNG }, 'not a plain relative path'],
+  [{ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'page.html': '<script>' }, 'page.html: not allowed']
+];
+function manifest(m) { return { 'manifest.json': JSON.stringify(m) }; }
+function refusedAll(i, done) {
+  if (i >= REFUSED.length) return done();
+  theme.parse(zip(REFUSED[i][0]), function (r) {
+    var why = REFUSED[i][1];
+    assert.ok(r.errors && r.errors.join('\n').indexOf(why) !== -1, why + ' in ' + JSON.stringify(r.errors));
+    refusedAll(i + 1, done);
+  });
+}
+function step2(parsed) {
+  refusedAll(0, function () {
+    theme.parse(new Buffer('not a zip at all, longer than a header'), function (r) {
+      assert.deepEqual(r.errors, ['not a zip file']);
+      var mac = zip({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), '__MACOSX/._manifest.json': 'x', '.DS_Store': 'x' });
+      theme.parse(mac, function (r2) {
+        assert.ok(!r2.errors, 'what macOS adds to a zip is passed over');
+        var big = new Buffer(20 * 1024 * 1024);
+        big.fill(0);
+        theme.parse(zip({ 'manifest.json': JSON.stringify({ format: 1, name: 'x' }), 'bomb.png': big }, 10), function (r3) {
+          assert.ok(r3.errors && r3.errors.join('\n').indexOf('bomb.png: unpacks to more than it states') !== -1, JSON.stringify(r3.errors));
+          console.log('  ✓ refused as Hearth refuses: unknown keys, missing files, scripts and pages, paths out of the zip');
+          console.log('  ✓ an entry unpacking to more than its stated size is stopped (a zip bomb)');
+          step3(parsed);
+        });
+      });
+    });
+  });
+}
+
+function step3(parsed) {
+  var dir = path.join(os.tmpdir(), 'gh-theme-' + process.pid);
 fs.mkdirSync(dir);
 var themesDir = path.join(dir, 'themes');
 fs.mkdirSync(themesDir);
@@ -140,3 +164,6 @@ theme.listZips(function (zips) {
     console.log('\nALL test-home-theme.js assertions passed!');
   });
 });
+}
+
+theme.parse(fullZip(), step1);
