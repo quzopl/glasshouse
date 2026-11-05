@@ -1,6 +1,200 @@
 <p align="center"><img src="docs/logo/glasshouse-512.png" width="128" alt="Glasshouse logo: a G whose top is a roof"></p>
 
-# Glasshouse
+# Glasshouse — Hearth themes & weather edition
+
+An **unofficial fork** of [Glasshouse](https://github.com/rorygallagher2024/glasshouse) by Rory Gallagher that adds three things to **Glasshouse Home**, the home screen Glasshouse puts in place of LG's on a rooted webOS TV:
+
+1. **Hearth themes** — load any theme made for [Hearth](https://github.com/rudra-avatar/Hearth) (one `.zip`): colours, fonts, wallpaper or slideshow, and the apps' order, names and icons. Switch them from the web dashboard or with the remote.
+2. **Weather** — a panel right of the clock: conditions and temperature now, feels-like, wind and humidity, and a five-day forecast, from [Open-Meteo](https://open-meteo.com) (free, no account, no API key).
+3. **Live preview fix for webOS 5** — the live HDMI preview *in the tile* stayed blank on webOS 5 (e.g. LG CX). It now plays.
+
+Everything else is upstream Glasshouse, unchanged. This fork updates itself from **this** repository's releases.
+
+<p align="center"><img src="docs/screenshots/fork/theme-polarna-noc.jpg" width="900" alt="Glasshouse Home with the Polar night theme: clock, weather panel with a five-day forecast, inputs and apps"></p>
+
+## Contents
+
+- [Install](#install)
+- [Hearth themes](#hearth-themes)
+- [Weather](#weather)
+- [Live preview on webOS 5](#live-preview-on-webos-5)
+- [Screenshots](#screenshots)
+- [Updating, building and releasing](#updating-building-and-releasing)
+- [Credits and licences](#credits-and-licences)
+- [Upstream README](#upstream-readme)
+
+## Install
+
+You need a **rooted** LG webOS TV with the [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel) (root shown as *ok* in its settings). See upstream's [Homebrew Channel guide](docs/install-homebrew-channel.md) if you don't have it yet.
+
+### A. From the Homebrew Channel (recommended)
+
+1. Open the **Homebrew Channel** → **Settings** → **Add repository**.
+2. Enter this address and confirm:
+
+   ```
+   https://raw.githubusercontent.com/quzopl/glasshouse/main/repo.json
+   ```
+
+3. Go back to the app list, open **Glasshouse** and press **Install** (it needs root, which the Homebrew Channel gives it).
+4. Open **Glasshouse** from the TV's home screen. The first launch puts the server in place, which takes a few seconds; setup then asks whether phones and computers on the network may use the dashboard. After that the dashboard is at `http://<tv-ip>:8080/` (the port can be changed).
+
+Installed this way, updates come through the Homebrew Channel: it offers new releases of this fork as updates.
+
+> If you also have the official Glasshouse catalog (or the default webosbrew repository lists Glasshouse), keep only one of them enabled: both offer the same app id, and the Homebrew Channel would install whichever has the higher version.
+
+### B. From Glasshouse's own app catalog
+
+Already running Glasshouse? In the web dashboard open **Apps** → **Install homebrew apps** → **Other app catalogs**, paste `https://github.com/quzopl/glasshouse` and choose **Add catalog** (Glasshouse reads the repository's `repo.json` by itself; adding a catalog needs **Install app from a URL or file** on, or a token). Then update **Glasshouse** from that catalog's list.
+
+### C. Manually
+
+Download `io.github.rorygallagher2024.lg-webos-dashboard_<version>_all.ipk` from the [latest release](https://github.com/quzopl/glasshouse/releases/latest) and install it with the Homebrew Channel's file option, webOS Dev Manager, or over SSH:
+
+```sh
+scp io.github.rorygallagher2024.lg-webos-dashboard_*_all.ipk root@<tv-ip>:/media/developer/temp/gh.ipk
+ssh root@<tv-ip> 'luna-send -n 1 luna://com.webos.appInstallService/dev/install \
+  "{\"id\":\"testing\",\"ipkUrl\":\"/media/developer/temp/gh.ipk\",\"subscribe\":false}"'
+```
+
+Or from a checkout, straight onto the TV over SSH (needs key login): `server/deploy.sh <tv-ip>`.
+
+### Switching an existing Glasshouse to this fork
+
+Install this package over it (any of the ways above). The app id is the same, so settings, Home layout and wallpapers stay, and an install made with `deploy.sh` is taken over in place the first time the app is opened. From then on updates come from this repository instead of upstream. To go back, install upstream's package again.
+
+## Hearth themes
+
+[Hearth](https://github.com/rudra-avatar/Hearth) is another home screen for webOS. Its themes are a single zip with a `manifest.json` ([format and rules](https://rudra-avatar.github.io/Hearth/theme/theme-guide/)). This fork reads them as Hearth does — an unknown key, a missing file or anything other than pictures, fonts, the manifest and notes refuses the zip, and the dashboard says why.
+
+**What a theme changes on Glasshouse Home**
+
+| Theme part | On Glasshouse Home |
+|---|---|
+| `colors.theme` (black, grey, midnight, forest, teal, graphite) | accent colour, background behind the wallpaper, and the text colour if the theme names no widget colour |
+| `colors.widget` / `colors.widgetInk` | text colour (clock, date, weather) |
+| `fonts` (`widget`, `names`) | font of the clock, date and weather; font of the tiles' names |
+| `wallpaper` (`file` or `folder`, `intervalSec`, `shuffle`) | one picture, or a slideshow, in place of the chosen wallpaper |
+| `apps` | the Apps row's order, and new names |
+| `icons` | the apps' icons |
+| `cities` | offered as places for the weather |
+| `iconStyle`, `colors.icon` | nothing on Glasshouse Home: listed as *not used* |
+
+Colours and app order go into the normal Home settings, so you can still change them while the theme is on. **Remove the theme** puts back the colours and order it replaced.
+
+**Using themes**
+
+- Put theme zips in **`/media/developer/themes`** on the TV (the folder Hearth uses), e.g. `scp mytheme.zip root@<tv-ip>:/media/developer/themes/`.
+- **Web dashboard** → **Home** → **Hearth theme**: every zip in that folder is a button; **Load a theme zip…** uploads one from your computer; **Remove the theme** takes it off.
+- **With the remote**: open the **Glasshouse** app → **Home** → **Hearth theme**. Each **OK** loads the next zip, and after the last one goes back to none.
+
+**Ten ready-made themes** are attached to every [release](https://github.com/quzopl/glasshouse/releases/latest), one zip each. They use Hearth's public-domain photos and SIL OFL fonts that include Polish and other Central European letters, and list ten Polish cities for the weather:
+
+| Zip | Name | Look |
+|---|---|---|
+| `polarna-noc.zip` | Polarna noc (Polar night) | teal palette, aurora and starry skies, Jura |
+| `las.zip` | Las (Forest) | forest green, ferns and an autumn river, Work Sans |
+| `ocean.zip` | Ocean | teal, waves and a reef, Outfit |
+| `gory.zip` | Góry (Mountains) | blue-grey, misty peaks, Lora |
+| `ognisko.zip` | Ognisko (Campfire) | graphite and amber, lava and sunsets, Bricolage Grotesque |
+| `polnoc.zip` | Północ (Midnight) | midnight blue, night landscapes, Poiret One |
+| `zen.zip` | Zen | light grey, a pier in the fog and Mount Fuji, Poppins |
+| `retro.zip` | Retro | OLED black, green pixel font (Pixelify Sans) |
+| `terminal.zip` | Terminal | OLED black, console green, JetBrains Mono |
+| `czern-oled.zip` | Czerń OLED (OLED black) | OLED black, white, Big Shoulders |
+
+The three black themes have no wallpaper of their own, so your normal Glasshouse wallpaper stays behind them; choose *None* under **Wallpaper** for pure black.
+
+**Making your own**: start from Hearth's [example zip](https://github.com/rudra-avatar/Hearth/blob/main/docs/theme/theme_name.zip) or one of the ten above, edit `manifest.json`, zip it again with `manifest.json` at the top of the zip. Use fonts that cover the letters of your language — many web font files are Latin-only subsets.
+
+Limits: the zip at most 40 MB, at most 60 MB unpacked; an entry that unpacks to more than it declares refuses the zip (zip-bomb protection).
+
+## Weather
+
+**Web dashboard** → **Home** → **Weather**:
+
+- **On / Off**, and **°C / °F** (with °F, wind is in mph).
+- Type a place and press **Find** (Open-Meteo's geocoding, in the dashboard's language), then pick the right result. The cities of the theme that is on are offered too.
+
+**With the remote**: Glasshouse app → **Home** → **Weather** switches it on and off; **Weather place** steps through the theme's cities.
+
+The panel sits right of the clock: the conditions' icon and the temperature, the conditions and the place, feels-like temperature, wind and humidity, and five days with their icons, highs and lows. It follows the theme's text colour and font. It is hidden while a live preview is shown *beside the clock* (with **Preview in the tile** it stays).
+
+The TV asks `api.open-meteo.com` at most every 20 minutes while the weather is on, and `geocoding-api.open-meteo.com` only when you search for a place. Nothing is sent except the place's coordinates. The setting is kept in `/var/lib/tvweb/home-weather.json`.
+
+## Live preview on webOS 5
+
+With **Live preview** and **Preview in the tile** on, the input's picture stayed blank on webOS 5: the page moved the video into the tile after starting it, and webOS 5's browser stops a media element that is moved. The preview is now placed first and started after. Tested on an LG OLED55CX (webOS 5, firmware 04.64.00).
+
+## Screenshots
+
+All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the TV captures only the page, not the video plane.
+
+<p align="center"><img src="docs/screenshots/fork/themes-grid.jpg" width="900" alt="The ten themes side by side"></p>
+
+| | |
+|---|---|
+| ![Polar night](docs/screenshots/fork/theme-polarna-noc.jpg) Polarna noc | ![Forest](docs/screenshots/fork/theme-las.jpg) Las |
+| ![Ocean](docs/screenshots/fork/theme-ocean.jpg) Ocean | ![Mountains](docs/screenshots/fork/theme-gory.jpg) Góry |
+| ![Campfire](docs/screenshots/fork/theme-ognisko.jpg) Ognisko | ![Midnight](docs/screenshots/fork/theme-polnoc.jpg) Północ |
+| ![Zen](docs/screenshots/fork/theme-zen.jpg) Zen | ![Retro](docs/screenshots/fork/theme-retro.jpg) Retro |
+| ![Terminal](docs/screenshots/fork/theme-terminal.jpg) Terminal | ![OLED black](docs/screenshots/fork/theme-czern-oled.jpg) Czerń OLED |
+
+**The weather panel**
+
+<img src="docs/screenshots/fork/weather-panel.jpg" width="560" alt="Weather panel: 6°, cloudy, Warsaw, feels-like, wind, humidity and five days">
+
+**Web dashboard → Home → Hearth theme**
+
+<img src="docs/screenshots/fork/dashboard-theme.png" width="900" alt="Hearth theme section of the web dashboard">
+
+**Web dashboard → Home → Weather**
+
+<img src="docs/screenshots/fork/dashboard-weather.png" width="900" alt="Weather section of the web dashboard">
+
+**Glasshouse app on the TV → Home** (theme and weather with the remote)
+
+<img src="docs/screenshots/fork/tvapp-home.png" width="900" alt="The Glasshouse TV app's Home tab with Hearth theme, Weather and Weather place rows">
+
+## Updating, building and releasing
+
+**Updating on the TV**: installed from the Homebrew Channel, updates come through it; installed with `deploy.sh`, the web dashboard's **Server** tab updates from this repository's releases.
+
+**Building** (needs Python 3 and Node.js):
+
+```sh
+npm install --prefix /tmp/ares @webos-tools/cli@3.2.6
+ARES_PACKAGE=/tmp/ares/node_modules/.bin/ares-package python3 scripts/build-ipk.py   # -> dist/*.ipk, dist/*.manifest.json
+python3 scripts/fork-repo-json.py                                                    # -> repo.json, absolute ipkUrl in the manifest
+```
+
+**Releasing**: set `TVWEB_VERSION` in `server/tvweb.js` (and `package.json`), build as above, commit `repo.json`, tag `v<version>`, and attach the `.ipk`, the `.manifest.json` and the theme zips to a GitHub release with the same tag. `repo.json` on `main` points at that release.
+
+**Checks**: `scripts/check-all.sh` (as upstream), including the new suites `test/test-home-theme.js` and `test/test-home-weather.js`.
+
+**What changed against upstream** (code):
+
+- `server/lib/home-theme.js` — Hearth zips: streaming unzip with size limits, manifest checks as Hearth's, storage in `/var/lib/tvweb/home-theme`, names/icons on the apps, fonts/background/wallpaper for the view.
+- `server/lib/home-weather.js` — Open-Meteo forecast and geocoding through the TV's curl/wget.
+- `server/lib/home.js`, `server/lib/routes.js` — wiring and `/api/home/theme*`, `/api/home/weather*`.
+- `server/assets/home.html` — theme fonts, background and slideshow; the weather panel; the webOS 5 preview fix.
+- `server/assets/ui.html`, `ui/home.js`, `ui/ui.css`, `dashboard.html` — dashboard sections and TV app rows.
+- `server/lib/updater.js`, `scripts/build-ipk.py`, `scripts/fork-repo-json.py`, `repo.json` — releases from this repository.
+
+## Credits and licences
+
+- **Glasshouse** © Rory Gallagher, [MIT](LICENSE) — all of the base project. Please report problems with the additions above here, not upstream.
+- **Hearth** © its authors, MIT — theme format, palettes, and the photos and fonts used in the ten themes.
+- Photos in the themes: public domain (as stated by Hearth's `THIRD_PARTY_NOTICES.md`). Fonts: SIL Open Font License 1.1; each theme zip carries its font's licence as `LICENCJA-czcionki.txt`.
+- Weather data: [Open-Meteo](https://open-meteo.com), CC BY 4.0.
+
+This fork is not affiliated with LG, webOS, Hearth or upstream Glasshouse. Rooting and running homebrew on your TV is at your own risk.
+
+---
+
+## Upstream README
+
+# Glasshouse (upstream)
 
 **Own the glass.** A dashboard, privacy controls and Home Assistant bridge for rooted LG webOS TVs.
 
