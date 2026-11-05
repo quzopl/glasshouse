@@ -152,7 +152,7 @@ With **Live preview** and **Preview in the tile** on, the input's picture stayed
 
 ## Screenshots
 
-All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the TV captures only the page, not the video plane. The Terminal and OLED Black shots were taken before icon styles came, so their icons show in colour.
+Glasshouse Home in English, as served by an LG OLED55CX: the TV's own Home page and data, drawn in a desktop browser at 1920 × 1080 so that the language could be English (the TV runs in Polish). The live HDMI preview cannot be shown in a screenshot: the TV captures only its pages, not the video plane, so the tiles show no picture here.
 
 <p align="center"><img src="docs/screenshots/fork/themes-grid.jpg" width="900" alt="The ten themes side by side"></p>
 
@@ -166,7 +166,7 @@ All taken on an LG OLED55CX. The HDMI preview does not show in screenshots: the 
 
 **The weather panel**
 
-<img src="docs/screenshots/fork/weather-panel.jpg" width="560" alt="Weather panel: 6°, cloudy, Warsaw, feels-like, wind, humidity and five days">
+<img src="docs/screenshots/fork/weather-panel.jpg" width="560" alt="Weather panel: 6°, cloudy, Warsaw, feels like, wind, humidity and five days">
 
 **Web dashboard → Home → Hearth theme**
 
