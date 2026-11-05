@@ -105,29 +105,35 @@ function entries(buf, errors) {
 /*
  * One entry unpacked, stopped as soon as it gives more than the size the zip
  * states for it: a zip bomb states a small size and unpacks to gigabytes,
- * and node 0.12's inflateRawSync has no limit on what it gives.
+ * and node 0.12's inflateRawSync has no limit on what it gives. The packed
+ * data goes in 16 KB at a time and no more is given once the limit is
+ * passed; the stream is left to end rather than closed, since closing zlib
+ * while it still works through a write aborts the server (node 8, a CX).
  */
+var INFLATE_STEP = 16384;
 function inflate(entry, cb) {
   if (entry.method === 0) return cb(entry.data.length === entry.size ? null : new Error('damaged'), entry.data);
-  var inf = zlib.createInflateRaw(), chunks = [], got = 0, done = false;
+  var inf = zlib.createInflateRaw(), chunks = [], got = 0, done = false, at = 0;
   function finish(err) {
     if (done) return;
     done = true;
-    if (err) {
-      inf.removeAllListeners('data');
-      try { inf.close(); } catch (e) { /* already closed */ }
-      return cb(err);
-    }
+    if (err) { chunks = []; return cb(err); }
     cb(got === entry.size ? null : new Error('damaged'), Buffer.concat(chunks, got));
   }
   inf.on('data', function (d) {
+    if (done) return;
     got += d.length;
     if (got > entry.size) return finish(new Error('unpacks to more than it states'));
     chunks.push(d);
   });
   inf.on('error', function () { finish(new Error('damaged')); });
   inf.on('end', function () { finish(null); });
-  inf.end(entry.data);
+  (function feed() {
+    if (done || at >= entry.data.length) return inf.end();
+    var piece = entry.data.slice(at, at + INFLATE_STEP);
+    at += INFLATE_STEP;
+    inf.write(piece, feed);
+  })();
 }
 
 // The zip's files as cb({ name: Buffer }), or cb(null) with errors.
