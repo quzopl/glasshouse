@@ -10,6 +10,8 @@ let homeSaving = false;
 let homeLoadRevision = 0;
 let homeWallTimer = null;
 let homeWallUploading = false;
+let homeThemeZips = [];   // the zips in Hearth's folder on the TV
+let homeThemeBusy = false;
 // null until the server says; false on a TV Glasshouse Home is not offered on.
 let homeAvailable = null;
 
@@ -58,6 +60,7 @@ async function loadHome(afterSave) {
     homeCat = cat;
     homeLayout = st.layout;
   } catch (e) { showErr(e.message); return; }
+  try { homeThemeZips = (await homeGet('/api/home/theme')).zips || []; } catch (e) { homeThemeZips = []; }
   await homeTvLoad();
   setHomeAvailable(homeStatus);
   if (!homeAvailable && activeTab === 'home') return showTab('control');
@@ -264,6 +267,7 @@ function renderHome() {
   renderHomeChannels();
   renderHomeWalls();
   renderHomeColours();
+  renderHomeTheme();
   if (!homeDarkDragging) showHomeDarkening(homeLayout && typeof homeLayout.darkening === 'number' ? homeLayout.darkening : 100);
   const darkWrap = q('home-dark-wrap');
   if (darkWrap) darkWrap.classList.toggle('disabled', !homeWritable());
@@ -989,3 +993,72 @@ function initHomeDarkSlider() {
 }
 
 initHomeDarkSlider();
+
+/* A Hearth theme (lib/home-theme on the server): the one on, the zips in
+   Hearth's folder on the TV, loading one from there or from this computer,
+   and taking it off again. */
+function renderHomeTheme() {
+  const now = q('home-theme-now'), zips = q('home-theme-zips');
+  if (!now || !homeStatus) return;
+  const th = homeStatus.theme;
+  const can = homeWritable() && !homeThemeBusy;
+  if (th) {
+    const p = th.parts || {};
+    const parts = [];
+    if (p.colours) parts.push(t('home.theme.partColours', 'colours'));
+    if (p.fonts) parts.push(t('home.theme.partFonts', 'fonts'));
+    if (p.wallpaper) parts.push(p.wallpaper > 1 ? t('home.theme.partSlideshow', 'a slideshow of {n}', { n: p.wallpaper }) : t('home.theme.partWallpaper', 'a wallpaper'));
+    if (p.apps) parts.push(t('home.theme.partApps', 'the order of {n} apps', { n: p.apps }));
+    if (p.icons) parts.push(t('home.theme.partIcons', '{n} icons', { n: p.icons }));
+    now.textContent = t('home.theme.on', 'On: {name}', { name: th.name + (th.author ? ' (' + th.author + ')' : '') }) +
+      (parts.length ? ' \u00b7 ' + parts.join(', ') : '') +
+      (th.ignored && th.ignored.length ? ' \u00b7 ' + t('home.theme.ignored', 'not used on Glasshouse Home: {parts}', { parts: th.ignored.join(', ') }) : '');
+  } else now.textContent = t('home.theme.none', 'No theme is on.');
+  zips.innerHTML = homeThemeZips.map(z => `<button type="button" class="pill idle${th && th.source === z.name ? ' on' : ''}" ${can ? '' : 'disabled'}
+    onclick="homeThemeLoad(${esc(JSON.stringify(z.name))})">${esc(z.name)}</button>`).join('');
+  q('home-theme-upload').disabled = !can;
+  q('home-theme-remove').disabled = !can || !th;
+}
+
+function homeThemeErrors(r) {
+  return [r.error].concat(r.errors || []).filter(Boolean).join(' \u2014 ');
+}
+
+async function homeThemeSend(send) {
+  if (!homeWritable() || homeThemeBusy) return;
+  const note = q('home-theme-note');
+  note.textContent = t('home.theme.loading', 'Loading the theme\u2026');
+  homeThemeBusy = true;
+  renderHomeTheme();
+  try {
+    const res = await send();
+    const r = await res.json();
+    if (!r || !r.ok) throw new Error(r ? homeThemeErrors(r) : t('common.unknownError', 'unknown error'));
+    note.textContent = r.theme ? t('home.theme.loaded', 'Theme loaded. Home updates within a few seconds.') : t('home.theme.removed', 'Theme removed.');
+  } catch (e) { note.textContent = e.message; }
+  finally {
+    homeThemeBusy = false;
+    await loadHome();
+  }
+}
+
+function homeThemeLoad(name) {
+  return homeThemeSend(() => fetch(api('/api/home/theme/load'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name })
+  }));
+}
+
+function homeThemePicked(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  return homeThemeSend(() => fetch(api('/api/home/theme/upload?name=' + encodeURIComponent(file.name)), {
+    method: 'POST', headers: { 'Content-Type': 'application/zip' }, body: file
+  }));
+}
+
+function homeThemeRemove() {
+  return homeThemeSend(() => fetch(api('/api/home/theme/remove'), {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+  }));
+}

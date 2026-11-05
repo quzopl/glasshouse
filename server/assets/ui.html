@@ -1305,6 +1305,17 @@
     <button type="button" id="home-col-reset" onclick="homeSaveLayout({ colours: homeDefaultLook() })" data-t="home.colours.reset">Use the default colours</button>
   </div>
 
+  <div class="pv-sec adv-sec" data-t="home.theme.title">Hearth theme</div>
+  <div class="sub" data-t="home.theme.desc">A theme made for Hearth, another home screen for webOS: one zip with its colours, fonts, wallpaper, and the apps&rsquo; order, names and icons. Zips in /media/developer/themes on the TV are listed here. Removing the theme puts back the colours and app order it replaced.</div>
+  <div class="sub" id="home-theme-now" role="status"></div>
+  <div class="btns" id="home-theme-zips"></div>
+  <input type="file" id="home-theme-file" accept=".zip,application/zip" hidden onchange="homeThemePicked(this)">
+  <div class="btns">
+    <button type="button" id="home-theme-upload" onclick="q('home-theme-file').click()" data-t="home.theme.upload">Load a theme zip&hellip;</button>
+    <button type="button" id="home-theme-remove" onclick="homeThemeRemove()" data-t="home.theme.remove">Remove the theme</button>
+  </div>
+  <div class="sub" id="home-theme-note" role="status"></div>
+
   <div class="pv-sec adv-sec" data-t="home.wall.title">Wallpaper</div>
   <div class="sub" data-t="home.wall.introSets">A picture behind Glasshouse Home for each part of the day: none, one of the picture sets, or your own.</div>
   <div class="btns wall-choice" id="home-wall-choice"></div>

@@ -748,6 +748,41 @@ function fromTV(req) {
  * Origins closes the gap for anything that does slip through. `exact` demands
  * the type with no parameters. Sends the refusal and returns false.
  */
+// A theme file's type by its extension: only these are in a theme (lib/home-theme).
+var THEME_TYPES = {
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.woff2': 'font/woff2', '.woff': 'font/woff', '.ttf': 'font/ttf', '.otf': 'font/otf'
+};
+
+/*
+ * A theme zip sent as the request's body, which states its size: a Hearth
+ * theme is a few MB, and the TV holds it in memory to unpack it.
+ */
+function receiveZip(req, cb) {
+  var length = String(req.headers['content-length'] || ''), max = homeModule.theme.MAX_ZIP;
+  if (req.headers['transfer-encoding'] || !/^\d{1,9}$/.test(length) || +length < 1 || +length > max) {
+    return cb({ status: 413, message: msg('srv.home.themeSize', 'The theme zip must be at most {mb} MB.', { mb: max >> 20 }) });
+  }
+  var chunks = [], got = 0, done = false;
+  var timer = setTimeout(function () { finish({ status: 408, message: 'the upload timed out' }); }, 60000);
+  function finish(error, buf) {
+    if (done) return;
+    done = true;
+    clearTimeout(timer);
+    cb(error, buf);
+  }
+  req.on('error', function () { finish({ status: 400, message: 'the upload failed' }); });
+  req.on('data', function (chunk) {
+    got += chunk.length;
+    if (got > +length) return finish({ status: 413, message: 'the upload is larger than it said' });
+    chunks.push(chunk);
+  });
+  req.on('end', function () {
+    if (got !== +length) return finish({ status: 400, message: 'the upload was cut short' });
+    finish(null, Buffer.concat(chunks));
+  });
+}
+
 function postGuard(req, res, wantType, exact) {
   var ctype = String(req.headers['content-type'] || '').toLowerCase();
   if (exact ? ctype !== wantType : ctype.indexOf(wantType) !== 0) {
@@ -1179,6 +1214,7 @@ function handleHomeRoute(req, res, u, pathname) {
         c.enabled = st.enabled;
         c.supported = st.supported;
         c.wallpapers = st.wallpapers;
+        c.theme = st.theme;
         c.layoutVersion = homeModule.layoutVersion();
         reply(c);
       });
@@ -1199,6 +1235,20 @@ function handleHomeRoute(req, res, u, pathname) {
       return sendIconFile(req, res, wallpaper, function (status, error) {
         send(res, status, JSON.stringify({ ok: false, error: error }));
       }, 'image/jpeg');
+    }
+    // A Hearth theme: the one on and the zips in Hearth's folder; and its files, for the view.
+    if (pathname === '/api/home/theme') {
+      return homeModule.theme.listZips(function (zips) {
+        reply({ ok: true, theme: homeModule.theme.summary(), zips: zips });
+      });
+    }
+    if (pathname === '/api/home/theme/file') {
+      var themePath = homeModule.theme.filePath(String(u.query && u.query.path || ''));
+      if (!themePath) return send(res, 404, JSON.stringify({ ok: false, error: 'not in the theme' }));
+      var themeExt = path.extname(themePath).toLowerCase();
+      return sendIconFile(req, res, themePath, function (status, error) {
+        send(res, status, JSON.stringify({ ok: false, error: error }));
+      }, THEME_TYPES[themeExt] || 'application/octet-stream', 'public, max-age=31536000');
     }
     if (pathname === '/api/home/recents') return homeModule.recentApps.list(reply);
     if (pathname === '/api/home/recents/image') {
@@ -1228,6 +1278,13 @@ function handleHomeRoute(req, res, u, pathname) {
         reply(r);
       });
     }
+    if (pathname === '/api/home/theme/upload') {
+      if (!postGuard(req, res, 'application/zip', true)) return;
+      return receiveZip(req, function (error, buf) {
+        if (error) return send(res, error.status, JSON.stringify({ ok: false, error: error.message }));
+        homeModule.loadTheme(buf, String(u.query && u.query.name || '').slice(0, 200), reply);
+      });
+    }
     if (pathname === '/api/home/beat') {
       if (!postGuard(req, res, 'application/json', false)) return;
       return readJsonBody(req, res, function (body) {
@@ -1240,6 +1297,13 @@ function handleHomeRoute(req, res, u, pathname) {
     return readJsonBody(req, res, function (body) {
       if (pathname === '/api/home/layout') return homeModule.setLayout(body, reply);
       if (pathname === '/api/home/start-layout') return homeModule.setHideLgHomeAtStart(body, reply);
+      if (pathname === '/api/home/theme/load') {
+        return homeModule.theme.readZip(body && body.name, function (err, buf) {
+          if (err) return reply({ ok: false, error: err.message });
+          homeModule.loadTheme(buf, String(body.name), reply);
+        });
+      }
+      if (pathname === '/api/home/theme/remove') return homeModule.removeTheme(reply);
       if (pathname === '/api/home/wallpapers') return homeModule.setWallpapers(body, reply);
       if (pathname === '/api/home/enable') return homeModule.enable(reply);
       if (pathname === '/api/home/disable') return homeModule.disable(reply);
