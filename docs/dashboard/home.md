@@ -296,7 +296,11 @@ A theme made for [Hearth](https://github.com/rudra-avatar/Hearth), another home 
 * **Wallpaper**: the theme's picture, or its slideshow, replaces the chosen wallpaper while the theme is on.
 * **Apps**: their order, names and icons on the Apps row.
 
-Icon styles, the icon colour and cities have nothing to change on Glasshouse Home and are named as not used. A zip is checked as Hearth checks it: an unknown key, a file the manifest names but the zip lacks, or anything but pictures, fonts, the manifest and notes refuses it, and the dashboard shows why. The colours and the app order can still be changed while the theme is on; **Remove the theme** puts back the ones it replaced.
+A theme's cities are offered as places for the weather. Icon styles and the icon colour have nothing to change on Glasshouse Home and are named as not used. A zip is checked as Hearth checks it: an unknown key, a file the manifest names but the zip lacks, or anything but pictures, fonts, the manifest and notes refuses it, and the dashboard shows why. The colours and the app order can still be changed while the theme is on; **Remove the theme** puts back the ones it replaced.
+
+## Weather
+
+The web dashboard's **Weather** section puts the weather under the date on Glasshouse Home: the conditions and temperature now and today's high and low, from [Open-Meteo](https://open-meteo.com), which needs no account, read at most every 20 minutes while it is on. The place is found by name, through Open-Meteo's geocoding, or picked from the cities of the Hearth theme that is on. Celsius or Fahrenheit. In the TV app, **Weather** on the Home tab switches it on and off once a place is chosen, and **Weather place** steps through the theme's cities.
 
 ## Wallpapers
 

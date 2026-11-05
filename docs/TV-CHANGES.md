@@ -142,6 +142,8 @@ Switching Glasshouse Home off reports a Home-key restore failure, including a sa
 
 A Hearth theme put on Glasshouse Home is unpacked into `/var/lib/tvweb/home-theme`: `theme.json`, with the colours and app order it replaced, and the fonts, pictures and icons it uses under `files/`. Removing the theme deletes the directory. Theme zips are read from `/media/developer/themes`, Hearth's folder, and never written there.
 
+With the weather on, the chosen place is kept in `/var/lib/tvweb/home-weather.json`, and the TV asks `api.open-meteo.com` for its weather at most every 20 minutes; a place searched for by name on the dashboard is looked up at `geocoding-api.open-meteo.com`.
+
 Home wallpapers uploaded through the browser go into `/var/lib/tvweb/home-wallpaper-uploads`, one for each time of day; a set chosen on the Home tab is downloaded from the `v2` tag of `rorygallagher2024/glasshouse-wallpapers` into `/var/lib/tvweb/home-wallpaper-sets/<set>`, and the choice is kept in `/var/lib/tvweb/home-wallpaper.json`. The directories are excluded from packages and rollback copies and removed with the server. Failed LG Home restoration remains visible and retryable on both dashboards.
 
 Glasshouse Home leaves empty rows out and centres the remaining rows below the clock. Empty rows reappear as movable strips while arranging.
